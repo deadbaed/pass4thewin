@@ -17,6 +17,12 @@ fn add_corner_other_line(str: &mut String, cur_elem: usize, num_elements: usize)
     str.push_str("   ");
 }
 
+fn clean_corner(str: &mut String) {
+    for _ in 0..4 {
+        str.pop();
+    }
+}
+
 fn tree(path: &str, string: &mut String) {
     let mut cur_elem: usize = 0;
     let num_elements = fs::read_dir(path).unwrap().count();
@@ -36,18 +42,21 @@ fn tree(path: &str, string: &mut String) {
         // if next element is the last
         add_corner_current_line(string, cur_elem, num_elements);
 
+        // display corner and current name
         println!("{}{}", string, current_name);
-        for _ in 0..4 {
-            string.pop();
-        }
+
+        // clean corner
+        clean_corner(string);
+
         if current_path.is_dir() {
             // if next element is the last
             add_corner_other_line(string, cur_elem, num_elements);
 
+            // pass through new folder
             tree(current_path.to_str().unwrap(), string);
-            for _ in 0..4 {
-                string.pop();
-            }
+
+            // clean corner
+            clean_corner(string);
         }
         cur_elem += 1;
     }
