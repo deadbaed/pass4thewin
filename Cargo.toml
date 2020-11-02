@@ -7,3 +7,4 @@ edition = "2018"
 [dependencies]
 clipboard-win = "4.0.3"
 notify-rust = "4"
+qr2term = "0.2.1"

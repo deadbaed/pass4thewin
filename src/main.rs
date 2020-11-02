@@ -2,6 +2,7 @@ mod utils;
 
 use utils::clipboard::set_clipboard;
 use utils::notification::send_notification;
+use utils::qrcode::export_to_qrcode;
 use utils::tree::tree;
 
 fn main() {
@@ -12,5 +13,6 @@ fn main() {
     if set_clipboard(path) == true {
         // somehow notifications are not always sending
         send_notification("my-secure-password");
+        export_to_qrcode(path);
     }
 }
