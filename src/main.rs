@@ -1,4 +1,5 @@
 use std::fs;
+use std::io;
 
 fn add_corner_current_line(str: &mut String, cur_elem: usize, num_elements: usize) {
     if cur_elem + 1 == num_elements {
@@ -23,23 +24,28 @@ fn clean_corner(str: &mut String) {
     }
 }
 
-fn tree(path: &str, string: &mut String, corner: &mut String) {
+fn tree_folder(path: &str, string: &mut String, corner: &mut String) -> io::Result<()> {
     let mut cur_elem: usize = 0;
-    let num_elements = fs::read_dir(path).unwrap().count();
+    let num_elements = fs::read_dir(path)?.count();
 
-    for entry in fs::read_dir(path).unwrap() {
-        let dir = entry.unwrap();
+    for entry in fs::read_dir(path)? {
+        let dir = entry?;
         let current_path = dir.path();
+        let current_path_str = current_path
+            .to_str()
+            .expect("can't convert path to a utf8 string");
         let current_name = dir.file_name();
-        let current_name = current_name.to_str().unwrap();
+        let current_name = current_name
+            .to_str()
+            .expect("can't convert name to a utf8 string");
 
         // if current path is a hidden folder / file, skip it
-        if current_name.starts_with(".") {
+        if current_name.starts_with('.') {
             cur_elem += 1;
             continue;
         }
 
-        // if next element is the last
+        // add corner for current line
         add_corner_current_line(corner, cur_elem, num_elements);
 
         // put corner and current name
@@ -51,26 +57,35 @@ fn tree(path: &str, string: &mut String, corner: &mut String) {
         clean_corner(corner);
 
         if current_path.is_dir() {
-            // if next element is the last
+            // add padding corner
             add_corner_other_line(corner, cur_elem, num_elements);
 
             // pass through new folder
-            tree(current_path.to_str().unwrap(), string, corner);
+            tree_folder(current_path_str, string, corner)?;
 
             // clean corner
             clean_corner(corner);
         }
         cur_elem += 1;
     }
+    Ok(())
+}
+
+fn tree(path: &str) -> Option<String> {
+    let mut corner = String::new();
+    let mut string = String::new();
+
+    string.push_str(path);
+    string.push('\n');
+
+    tree_folder(path, &mut string, &mut corner).ok();
+
+    Some(string)
 }
 
 fn main() {
     let path = "C:\\users\\x4m3\\.password-store\\";
-
-    let mut corner = String::new();
-    let mut string = String::new();
-    println!("{}", path);
-    tree(path, &mut string, &mut corner);
-
-    println!("{}", string);
+    if let Some(tree_str) = tree(path) {
+        println!("{}", tree_str)
+    }
 }
