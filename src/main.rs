@@ -23,7 +23,7 @@ fn clean_corner(str: &mut String) {
     }
 }
 
-fn tree(path: &str, string: &mut String) {
+fn tree(path: &str, string: &mut String, corner: &mut String) {
     let mut cur_elem: usize = 0;
     let num_elements = fs::read_dir(path).unwrap().count();
 
@@ -40,23 +40,25 @@ fn tree(path: &str, string: &mut String) {
         }
 
         // if next element is the last
-        add_corner_current_line(string, cur_elem, num_elements);
+        add_corner_current_line(corner, cur_elem, num_elements);
 
-        // display corner and current name
-        println!("{}{}", string, current_name);
+        // put corner and current name
+        string.push_str(corner);
+        string.push_str(current_name);
+        string.push('\n');
 
         // clean corner
-        clean_corner(string);
+        clean_corner(corner);
 
         if current_path.is_dir() {
             // if next element is the last
-            add_corner_other_line(string, cur_elem, num_elements);
+            add_corner_other_line(corner, cur_elem, num_elements);
 
             // pass through new folder
-            tree(current_path.to_str().unwrap(), string);
+            tree(current_path.to_str().unwrap(), string, corner);
 
             // clean corner
-            clean_corner(string);
+            clean_corner(corner);
         }
         cur_elem += 1;
     }
@@ -65,7 +67,10 @@ fn tree(path: &str, string: &mut String) {
 fn main() {
     let path = "C:\\users\\x4m3\\.password-store\\";
 
+    let mut corner = String::new();
     let mut string = String::new();
     println!("{}", path);
-    tree(path, &mut string);
+    tree(path, &mut string, &mut corner);
+
+    println!("{}", string);
 }
