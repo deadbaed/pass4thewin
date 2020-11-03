@@ -24,12 +24,7 @@ fn clean_corner(str: &mut String) {
     }
 }
 
-fn tree_folder(
-    path: &str,
-    string: &mut String,
-    corner: &mut String,
-    first_time: bool,
-) -> io::Result<()> {
+fn tree_folder(path: &str, string: &mut String, corner: &mut String) -> io::Result<()> {
     let mut cur_elem: usize = 0;
     let num_elements = fs::read_dir(path)?.count();
 
@@ -50,11 +45,6 @@ fn tree_folder(
             continue;
         }
 
-        if first_time {
-            string.push_str(path);
-            string.push('\n');
-        }
-
         // add corner for current line
         add_corner_current_line(corner, cur_elem, num_elements);
 
@@ -71,7 +61,7 @@ fn tree_folder(
             add_corner_other_line(corner, cur_elem, num_elements);
 
             // pass through new folder
-            tree_folder(current_path_str, string, corner, first_time)?;
+            tree_folder(current_path_str, string, corner)?;
 
             // clean corner
             clean_corner(corner);
@@ -86,7 +76,10 @@ pub fn tree(path: &str) -> Option<String> {
     let mut corner = String::new();
     let mut string = String::new();
 
-    tree_folder(path, &mut string, &mut corner, true).ok();
+    string.push_str(path);
+    string.push('\n');
+
+    tree_folder(path, &mut string, &mut corner).ok();
 
     Some(string)
 }
