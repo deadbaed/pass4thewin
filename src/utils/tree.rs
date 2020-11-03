@@ -1,5 +1,6 @@
 use std::fs;
 use std::io;
+use std::path::PathBuf;
 
 fn add_corner_current_line(str: &mut String, cur_elem: usize, num_elements: usize) {
     if cur_elem + 1 == num_elements {
@@ -24,16 +25,13 @@ fn clean_corner(str: &mut String) {
     }
 }
 
-fn tree_folder(path: &str, string: &mut String, corner: &mut String) -> io::Result<()> {
+fn tree_folder(path: &PathBuf, string: &mut String, corner: &mut String) -> io::Result<()> {
     let mut cur_elem: usize = 0;
     let num_elements = fs::read_dir(path)?.count();
 
     for entry in fs::read_dir(path)? {
         let dir = entry?;
         let current_path = dir.path();
-        let current_path_str = current_path
-            .to_str()
-            .expect("can't convert path to a utf8 string");
         let current_name = dir.file_name();
         let current_name = current_name
             .to_str()
@@ -61,7 +59,7 @@ fn tree_folder(path: &str, string: &mut String, corner: &mut String) -> io::Resu
             add_corner_other_line(corner, cur_elem, num_elements);
 
             // pass through new folder
-            tree_folder(current_path_str, string, corner)?;
+            tree_folder(&current_path, string, corner)?;
 
             // clean corner
             clean_corner(corner);
@@ -72,11 +70,11 @@ fn tree_folder(path: &str, string: &mut String, corner: &mut String) -> io::Resu
 }
 
 /// Pass through a path
-pub fn tree(path: &str) -> Option<String> {
+pub fn tree(path: &PathBuf) -> Option<String> {
     let mut corner = String::new();
     let mut string = String::new();
 
-    string.push_str(path);
+    string.push_str(path.to_str().unwrap());
     string.push('\n');
 
     tree_folder(path, &mut string, &mut corner).ok();
