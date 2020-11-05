@@ -1,22 +1,16 @@
 use git2::{Commit, Error, ObjectType, Oid, Repository, Tree};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
-pub fn create_repo(path: &Path) -> Option<Repository> {
-    match Repository::init(path) {
-        Ok(repo) => Some(repo),
-        Err(_) => None,
-    }
+/// Initiate repository with empty commit
+pub fn init_repo(path: &Path) -> Result<Repository, Error> {
+    let repo = Repository::init(path)?;
+    create_initial_commit(&repo)?;
+
+    Ok(repo)
 }
 
-pub fn open_repo(path: &Path) -> Option<Repository> {
-    match Repository::open(path) {
-        Ok(repo) => Some(repo),
-        Err(_) => None,
-    }
-}
-
-/// Create empty commit with no files
-pub fn create_initial_commit(repo: &Repository) -> Result<Oid, Error> {
+/// Create initial commit with no files
+fn create_initial_commit(repo: &Repository) -> Result<Oid, Error> {
     let sig = repo.signature()?;
 
     // Create empty tree to commit
@@ -41,7 +35,7 @@ fn get_head_commit(repo: &Repository) -> Result<Commit, Error> {
 }
 
 /// Make a commit with a tree and a message to current branch
-pub fn create_commit(repo: &Repository, tree: &Tree, message: &str) -> Result<Oid, Error> {
+fn create_commit(repo: &Repository, tree: &Tree, message: &str) -> Result<Oid, Error> {
     let sig = repo.signature()?;
     let parent_commit = get_head_commit(repo)?;
 
@@ -49,7 +43,7 @@ pub fn create_commit(repo: &Repository, tree: &Tree, message: &str) -> Result<Oi
 }
 
 /// Create tree
-pub fn add_file<'a>(repo: &'a Repository, path: &Path) -> Result<Tree<'a>, Error> {
+fn add_file<'a>(repo: &'a Repository, path: &Path) -> Result<Tree<'a>, Error> {
     // Get repo index
     let mut index = repo.index()?;
 
@@ -61,4 +55,38 @@ pub fn add_file<'a>(repo: &'a Repository, path: &Path) -> Result<Tree<'a>, Error
 
     // Get tree from newly written index
     repo.find_tree(oid)
+}
+
+/// Gets relative path of a file based of the root of the git repo
+///
+/// repo: git repository (will be used as base path
+/// relative_path: full path of file to extract relative path
+fn get_relative_path(repo: &Repository, relative_path: &Path) -> Option<PathBuf> {
+    // We want the root of the repo, *without* the git folder
+    let path_repo = repo.path().parent()?;
+
+    // Remove the common base path, and return the rest
+    match relative_path.strip_prefix(path_repo) {
+        Ok(path) => Some(PathBuf::from(path)),
+        Err(_) => None,
+    }
+}
+
+/// Add a file and commit it
+///
+/// repo: git repository
+/// path: full path of the file to add
+pub fn add_commit_file(repo: &Repository, path: &Path) -> bool {
+    let relative_path_file = match get_relative_path(&repo, &path) {
+        Some(file_path) => file_path,
+        None => return false,
+    };
+
+    let tree_file_added = match add_file(&repo, &relative_path_file) {
+        Ok(tree) => tree,
+        Err(_) => return false,
+    };
+
+    let commit_msg = format!("Added password {}\n", relative_path_file.display());
+    create_commit(&repo, &tree_file_added, &commit_msg).is_ok()
 }
