@@ -8,10 +8,7 @@ pub fn get_clipboard() -> Option<String> {
 }
 
 pub fn set_clipboard(text: &str) -> bool {
-    match set_clipboard_string(text) {
-        Ok(_) => true,
-        Err(_) => false,
-    }
+    set_clipboard_string(text).is_ok()
 }
 
 #[cfg(test)]

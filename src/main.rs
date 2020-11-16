@@ -1,6 +1,6 @@
 mod utils;
 
-use utils::clipboard::set_clipboard;
+use utils::clipboard::{get_clipboard, set_clipboard};
 use utils::notification::send_notification;
 use utils::qrcode::export_to_qrcode;
 use utils::sync::{add_commit_file, init_repo};
@@ -24,6 +24,7 @@ fn main() {
         send_notification("my-secure-password");
         export_to_qrcode(current_path_str);
     }
+    assert_eq!(get_clipboard().unwrap(), current_path_str);
 
     // Try to open git repository, create one on failure
     // let repo_test_path = current_path_str.to_owned() + "\\test-repo";
