@@ -1,6 +1,7 @@
 mod utils;
 
 use utils::clipboard::{get_clipboard, set_clipboard};
+use utils::crypto::decrypt;
 use utils::notification::send_notification;
 use utils::qrcode::export_to_qrcode;
 use utils::sync::{add_commit_file, init_repo};
@@ -52,4 +53,12 @@ fn main() {
     }
 
     add_commit_file(&repo, &file_path);
+
+    let path_privkey = "C:\\Users\\x4m3\\Desktop\\openpgp-testing\\secret-only.asc";
+    let path_encrypted_file = "C:\\Users\\x4m3\\Desktop\\openpgp-testing\\password.txt.gpg";
+
+    match decrypt(path_encrypted_file.as_ref(), path_privkey.as_ref()) {
+        Ok(e) => println!("ok {:?}", e),
+        Err(e) => eprintln!("err {:?}", e),
+    }
 }
