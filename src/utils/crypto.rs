@@ -1,6 +1,6 @@
 use anyhow::Context;
 use sequoia_openpgp::crypto::SessionKey;
-use sequoia_openpgp::packet::{PKESK, SKESK};
+use sequoia_openpgp::packet::{key, Key, PKESK, SKESK};
 use sequoia_openpgp::parse::stream::{
     DecryptionHelper, DecryptorBuilder, MessageStructure, VerificationHelper,
 };
@@ -14,7 +14,7 @@ use std::path::Path;
 
 struct Helper<'a> {
     policy: &'a dyn Policy,
-    secret: &'a Cert,
+    secret_keys: Vec<Key<key::SecretParts, key::UnspecifiedRole>>,
 }
 
 impl<'a> VerificationHelper for Helper<'a> {
@@ -27,6 +27,43 @@ impl<'a> VerificationHelper for Helper<'a> {
         println!("checking");
         Ok(())
     }
+}
+
+impl<'a> Helper<'a> {
+    fn new(policy: &'a dyn Policy, cert: Cert) -> Self {
+        // Import all secrets keys found in cert
+        let secret_keys = cert
+            .keys()
+            .with_policy(policy, None)
+            .for_transport_encryption()
+            .for_storage_encryption()
+            .secret()
+            .into_iter()
+            .map(|key| key.key().clone())
+            .collect::<Vec<_>>();
+
+        Self {
+            policy,
+            secret_keys,
+        }
+    }
+}
+
+/// Go through secret keys loaded from file
+/// and return the Key whose KeyID
+/// matches with the KeyID of the recipient.
+///
+/// Return `None` if no key matches
+fn get_secret_key_for_recipient(
+    secret_keys: &[Key<key::SecretParts, key::UnspecifiedRole>],
+    recipient: KeyID,
+) -> Option<Key<key::SecretParts, key::UnspecifiedRole>> {
+    for key in secret_keys {
+        if KeyID::from(key.fingerprint()) == recipient {
+            return Some(key.clone());
+        }
+    }
+    None
 }
 
 impl<'a> DecryptionHelper for Helper<'a> {
@@ -47,26 +84,11 @@ impl<'a> DecryptionHelper for Helper<'a> {
         let recipient_keyid = session_key.recipient().clone();
         println!("recipient {}", recipient_keyid);
 
-        let secret_keys = self
-            .secret
-            .keys()
-            .with_policy(self.policy, None)
-            .for_transport_encryption()
-            .for_storage_encryption()
-            .secret()
-            .into_iter()
-            .filter(|key| KeyID::from(key.fingerprint()) == recipient_keyid)
-            .map(|key| key.key().clone())
-            .collect::<Vec<_>>();
-
-        // TODO: if vector empty return error
-
-        for elem in secret_keys {
-            println!("{:?}", elem.fingerprint());
-        }
+        // Get secret key to use to decrypt file
+        let secret_key = get_secret_key_for_recipient(&self.secret_keys, recipient_keyid)
+            .context("Could not find key to decrypt file")?;
 
         // TODO: prompt password to decrypt session key
-        //
         // let password = rpassword::read_password_from_tty(Some(
         //     &"Enter password to decrypt key: ".to_string(),
         // ))?;
@@ -79,10 +101,7 @@ pub fn decrypt(encrypted_path: &Path, key_path: &Path) -> Result<String> {
     let policy = &mut StandardPolicy::new();
     let cert = Cert::from_file(key_path).context("Failed to load key from file")?;
 
-    let helper = Helper {
-        policy,
-        secret: &cert,
-    };
+    let helper = Helper::new(policy, cert);
 
     let decryptor = DecryptorBuilder::from_file(encrypted_path)
         .context(format!("Failed to open file {}", encrypted_path.display()))?;
