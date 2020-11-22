@@ -44,25 +44,26 @@ impl<'a> DecryptionHelper for Helper<'a> {
 
         // PKESK is the session key
         let session_key = &pkesks[0];
-        let recipient_keyid = session_key.recipient();
+        let recipient_keyid = session_key.recipient().clone();
         println!("recipient {}", recipient_keyid);
 
-        // TODO: go through all the keys that can be used to decrypt stuff
-        for ka in self
+        let secret_keys = self
             .secret
             .keys()
             .with_policy(self.policy, None)
             .for_transport_encryption()
             .for_storage_encryption()
             .secret()
-        {
-            let key_keyid: KeyID = ka.key().fingerprint().into();
-            if recipient_keyid == &key_keyid {
-                println!("key match!");
-            }
-        }
+            .into_iter()
+            .filter(|key| KeyID::from(key.fingerprint()) == recipient_keyid)
+            .map(|key| key.key().clone())
+            .collect::<Vec<_>>();
 
-        // TODO: collect when key match, otherwise if empty at end return error
+        // TODO: if vector empty return error
+
+        for elem in secret_keys {
+            println!("{:?}", elem.fingerprint());
+        }
 
         // TODO: prompt password to decrypt session key
         //

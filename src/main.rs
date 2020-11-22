@@ -54,8 +54,9 @@ fn main() {
 
     add_commit_file(&repo, &file_path);
 
-    let path_privkey = "C:\\Users\\x4m3\\Desktop\\openpgp-testing\\secret-only.asc";
-    let path_encrypted_file = "C:\\Users\\x4m3\\Desktop\\openpgp-testing\\password.txt.gpg";
+    // let path_privkey = "C:\\Users\\x4m3\\Desktop\\openpgp-testing\\private.gpg";
+    let path_privkey = "C:\\Users\\x4m3\\Desktop\\openpgp-testing\\old\\secret-only.asc";
+    let path_encrypted_file = "C:\\Users\\x4m3\\Desktop\\openpgp-testing\\password.gpg";
 
     match decrypt(path_encrypted_file.as_ref(), path_privkey.as_ref()) {
         Ok(e) => println!("ok {:?}", e),
