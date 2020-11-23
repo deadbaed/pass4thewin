@@ -12,13 +12,12 @@ use sequoia_openpgp::{crypto, KeyID};
 use sequoia_openpgp::{Cert, Fingerprint, KeyHandle};
 use std::path::Path;
 
-struct Helper<'a> {
-    policy: &'a dyn Policy,
+struct Helper {
     cert: Cert,
     secret_keys: Vec<Key<key::SecretParts, key::UnspecifiedRole>>,
 }
 
-impl<'a> VerificationHelper for Helper<'a> {
+impl VerificationHelper for Helper {
     fn get_certs(&mut self, _ids: &[KeyHandle]) -> Result<Vec<Cert>> {
         println!("getting certs");
         Ok(Vec::new())
@@ -30,8 +29,8 @@ impl<'a> VerificationHelper for Helper<'a> {
     }
 }
 
-impl<'a> Helper<'a> {
-    fn new(policy: &'a dyn Policy, cert: Cert) -> Self {
+impl Helper {
+    fn new(policy: &dyn Policy, cert: Cert) -> Self {
         // Import all secrets keys found in cert
         let secret_keys = cert
             .keys()
@@ -43,11 +42,7 @@ impl<'a> Helper<'a> {
             .map(|key| key.key().clone())
             .collect::<Vec<_>>();
 
-        Self {
-            policy,
-            cert,
-            secret_keys,
-        }
+        Self { cert, secret_keys }
     }
 
     /// Try to decrypt PKESK packet with `keypair`
@@ -96,11 +91,11 @@ fn get_secret_key_for_recipient(
     None
 }
 
-impl<'a> DecryptionHelper for Helper<'a> {
+impl DecryptionHelper for Helper {
     fn decrypt<D>(
         &mut self,
         pkesks: &[PKESK],
-        skesks: &[SKESK],
+        _skesks: &[SKESK],
         sym_algo: Option<SymmetricAlgorithm>,
         mut decrypt: D,
     ) -> Result<Option<Fingerprint>>
