@@ -56,7 +56,11 @@ fn main() {
 
     let path_privkey = "C:\\Users\\x4m3\\Desktop\\openpgp-testing\\private.gpg";
     // let path_privkey = "C:\\Users\\x4m3\\Desktop\\openpgp-testing\\old\\secret-only.asc";
+    // let path_privkey = "C:\\Users\\x4m3\\Desktop\\openpgp-testing\\no-password\\secret-nopass.asc";
+
     let path_encrypted_file = "C:\\Users\\x4m3\\Desktop\\openpgp-testing\\password.gpg";
+    // let path_encrypted_file =
+    //     "C:\\Users\\x4m3\\Desktop\\openpgp-testing\\no-password\\pass.txt.gpg";
 
     match decrypt(path_encrypted_file.as_ref(), path_privkey.as_ref()) {
         Ok(e) => println!("ok {:?}", e),

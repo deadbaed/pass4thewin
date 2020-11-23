@@ -7,13 +7,14 @@ use sequoia_openpgp::parse::stream::{
 use sequoia_openpgp::parse::Parse;
 use sequoia_openpgp::policy::{Policy, StandardPolicy};
 use sequoia_openpgp::types::SymmetricAlgorithm;
-use sequoia_openpgp::KeyID;
 use sequoia_openpgp::Result;
+use sequoia_openpgp::{crypto, KeyID};
 use sequoia_openpgp::{Cert, Fingerprint, KeyHandle};
 use std::path::Path;
 
 struct Helper<'a> {
     policy: &'a dyn Policy,
+    cert: Cert,
     secret_keys: Vec<Key<key::SecretParts, key::UnspecifiedRole>>,
 }
 
@@ -44,7 +45,36 @@ impl<'a> Helper<'a> {
 
         Self {
             policy,
+            cert,
             secret_keys,
+        }
+    }
+
+    /// Try to decrypt PKESK packet with `keypair`
+    /// And try to decrypt packet parser with `decrypt`
+    fn try_decrypt<D>(
+        &self,
+        pkesk: &PKESK,
+        sym_algo: Option<SymmetricAlgorithm>,
+        keypair: &mut dyn crypto::Decryptor,
+        decrypt: &mut D,
+    ) -> Option<Fingerprint>
+    where
+        D: FnMut(SymmetricAlgorithm, &SessionKey) -> bool,
+    {
+        println!("try_decrypt");
+        match pkesk
+            .decrypt(keypair, sym_algo)
+            .and_then(|(algo, session_key)| {
+                println!("decrypt");
+                if decrypt(algo, &session_key) {
+                    Some(session_key)
+                } else {
+                    None
+                }
+            }) {
+            Some(_session_key) => Some(self.cert.fingerprint()),
+            None => None,
         }
     }
 }
@@ -85,13 +115,47 @@ impl<'a> DecryptionHelper for Helper<'a> {
         println!("recipient {}", recipient_keyid);
 
         // Get secret key to use to decrypt file
-        let secret_key = get_secret_key_for_recipient(&self.secret_keys, recipient_keyid)
+        let mut secret_key = get_secret_key_for_recipient(&self.secret_keys, recipient_keyid)
             .context("Could not find key to decrypt file")?;
 
-        // TODO: prompt password to decrypt session key
-        // let password = rpassword::read_password_from_tty(Some(
-        //     &"Enter password to decrypt key: ".to_string(),
-        // ))?;
+        // Try to use secret key without prompting for a password
+        if !secret_key.secret().is_encrypted() {
+            println!("key has no password");
+            if let Some(fingerprint) =
+                secret_key
+                    .clone()
+                    .into_keypair()
+                    .ok()
+                    .and_then(|mut keypair| {
+                        self.try_decrypt(session_key, sym_algo, &mut keypair, &mut decrypt)
+                    })
+            {
+                return Ok(Some(fingerprint));
+            }
+        }
+
+        // Ask password of secret key
+        let mut keypair = loop {
+            println!("gonna ask for password");
+
+            // Prompt password to decrypt key
+            let password =
+                rpassword::read_password_from_tty(Some("Enter password to decrypt key: "))?.into();
+
+            let algo = secret_key.pk_algo();
+            if let Ok(()) = secret_key.secret_mut().decrypt_in_place(algo, &password) {
+                println!("Good password.");
+                break secret_key.clone().into_keypair()?;
+            } else {
+                eprintln!("Bad password.")
+            }
+        };
+
+        if let Some(fingerprint) =
+            self.try_decrypt(session_key, sym_algo, &mut keypair, &mut decrypt)
+        {
+            return Ok(Some(fingerprint));
+        }
 
         Ok(None)
     }
