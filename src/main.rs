@@ -1,11 +1,16 @@
-mod utils;
+pub mod clipboard;
+pub mod decrypt;
+pub mod notification;
+pub mod qrcode;
+pub mod sync;
+pub mod tree;
 
-use utils::clipboard::{get_clipboard, set_clipboard};
-use utils::crypto::decrypt;
-use utils::notification::send_notification;
-use utils::qrcode::export_to_qrcode;
-use utils::sync::{add_commit_file, init_repo};
-use utils::tree::tree;
+use clipboard::{get_clipboard, set_clipboard};
+use decrypt::decrypt;
+use notification::send_notification;
+use qrcode::export_to_qrcode;
+use sync::{add_commit_file, init_repo};
+use tree::tree;
 
 use git2::Repository;
 use std::env;

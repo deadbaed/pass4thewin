@@ -13,7 +13,7 @@ pub fn set_clipboard(text: &str) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use crate::utils::clipboard::{get_clipboard, set_clipboard};
+    use crate::clipboard::{get_clipboard, set_clipboard};
 
     #[test]
     fn test_clipboard() {
