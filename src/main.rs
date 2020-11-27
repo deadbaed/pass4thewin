@@ -1,5 +1,6 @@
 pub mod clipboard;
 pub mod decrypt;
+pub mod encrypt;
 pub mod notification;
 pub mod qrcode;
 pub mod sync;
@@ -7,16 +8,16 @@ pub mod tree;
 
 use clipboard::{get_clipboard, set_clipboard};
 use decrypt::decrypt;
+use encrypt::encrypt_file;
+use git2::Repository;
 use notification::send_notification;
 use qrcode::export_to_qrcode;
-use sync::{add_commit_file, init_repo};
-use tree::tree;
-
-use git2::Repository;
 use std::env;
 use std::fs::File;
 use std::io::Write;
 use std::path::{Path, PathBuf};
+use sync::{add_commit_file, init_repo};
+use tree::tree;
 
 fn main() {
     let current_path = env::current_dir().unwrap();
@@ -59,13 +60,11 @@ fn main() {
 
     add_commit_file(&repo, &file_path);
 
+    let path_plaintext_file = "C:\\Users\\x4m3\\Desktop\\openpgp-testing\\file.txt";
     let path_privkey = "C:\\Users\\x4m3\\Desktop\\openpgp-testing\\private.gpg";
-    // let path_privkey = "C:\\Users\\x4m3\\Desktop\\openpgp-testing\\old\\secret-only.asc";
-    // let path_privkey = "C:\\Users\\x4m3\\Desktop\\openpgp-testing\\no-password\\secret-nopass.asc";
 
-    let path_encrypted_file = "C:\\Users\\x4m3\\Desktop\\openpgp-testing\\password.gpg";
-    // let path_encrypted_file =
-    //     "C:\\Users\\x4m3\\Desktop\\openpgp-testing\\no-password\\pass.txt.gpg";
+    let path_encrypted_file = encrypt_file(path_plaintext_file.as_ref(), path_privkey.as_ref())
+        .expect("failed to encrypt file");
 
     match decrypt(path_encrypted_file.as_ref(), path_privkey.as_ref()) {
         Ok(e) => println!("ok {:?}", e),
