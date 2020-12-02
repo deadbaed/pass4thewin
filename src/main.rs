@@ -29,9 +29,28 @@ enum Command {
     /// Find passwords matching parameter
     Find { search: String },
     /// Show existing password
-    Show { password: String },
+    Show {
+        password: String,
+        /// Display only specific line of password file
+        #[structopt(long = "line")]
+        line: Option<usize>,
+        /// Copy password to clipboard
+        #[structopt(short = "c", long = "clipboard")]
+        clipboard: bool,
+    },
     /// Insert new password
-    Insert { password: String },
+    Insert {
+        password: String,
+        /// Display only specific line of password file
+        #[structopt(short = "m", long = "multiline")]
+        multi_line: Option<usize>,
+        /// Display password to terminal after inserting it
+        #[structopt(short = "e", long = "echo")]
+        echo: bool,
+        /// Force insertion of password
+        #[structopt(short = "f", long = "force")]
+        force: bool,
+    },
     /// Edit existing password
     Edit { password: String },
     /// Generate new password
@@ -42,13 +61,33 @@ enum Command {
     },
     #[structopt(name = "rm")]
     /// Delete existing password or directory
-    Remove { old_path: String, new_path: String },
+    Remove {
+        path: String,
+        /// Recursively delete contents of path
+        #[structopt(short = "r", long = "recursive")]
+        recursive: bool,
+        /// Force deletion of path
+        #[structopt(short = "f", long = "force")]
+        force: bool,
+    },
     #[structopt(name = "mv")]
     /// Move or rename existing password or directory
-    Move { old_path: String, new_path: String },
+    Move {
+        old_path: String,
+        new_path: String,
+        /// Force move of path
+        #[structopt(short = "f", long = "force")]
+        force: bool,
+    },
     #[structopt(name = "cp")]
     /// Copy existing password or directory
-    Copy { old_path: String, new_path: String },
+    Copy {
+        old_path: String,
+        new_path: String,
+        /// Force copy of path
+        #[structopt(short = "f", long = "force")]
+        force: bool,
+    },
     /// If the password store is a git repository, execute some git commands
     Git(GitCommands),
 }
