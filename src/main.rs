@@ -1,4 +1,5 @@
 pub mod clipboard;
+pub mod cmd;
 pub mod decrypt;
 pub mod encrypt;
 pub mod notification;
@@ -11,9 +12,18 @@ use structopt::StructOpt;
 #[derive(Debug, StructOpt)]
 /// pass for the windows platform
 struct CliArgs {
-    password: Option<String>,
+    // List of subcommands
     #[structopt(subcommand)]
     cmd: Option<Command>,
+
+    // Replica of subcommand `show`
+    password: Option<String>,
+    /// Display only specific line of password file
+    #[structopt(long = "line")]
+    line: Option<usize>,
+    /// Copy password to clipboard
+    #[structopt(short = "c", long = "clipboard")]
+    clipboard: bool,
 }
 
 #[derive(Debug, StructOpt)]
@@ -101,4 +111,48 @@ enum GitCommands {
 fn main() {
     let cli_args = CliArgs::from_args();
     println!("{:?}", cli_args);
+
+    if let Some(password) = cli_args.password {
+        cmd::show(&password, cli_args.line, cli_args.clipboard)
+    }
+
+    match cli_args.cmd {
+        Some(cmd) => match cmd {
+            Command::Init { gpg_id } => cmd::init(&gpg_id),
+            Command::List { password } => cmd::list(password),
+            Command::Find { search } => cmd::find(&search),
+            Command::Show {
+                password,
+                line,
+                clipboard,
+            } => cmd::show(&password, line, clipboard),
+            Command::Insert {
+                password,
+                multi_line,
+                echo,
+                force,
+            } => cmd::insert(&password, multi_line, echo, force),
+            Command::Edit { password } => cmd::edit(&password),
+            Command::Generate { password, length } => cmd::generate(&password, length),
+            Command::Remove {
+                path,
+                recursive,
+                force,
+            } => cmd::remove(&path, recursive, force),
+            Command::Move {
+                old_path,
+                new_path,
+                force,
+            } => cmd::m0ve(&old_path, &new_path, force),
+            Command::Copy {
+                old_path,
+                new_path,
+                force,
+            } => cmd::copy(&old_path, &new_path, force),
+            Command::Git(git_cmd) => match git_cmd {
+                GitCommands::Init => cmd::git::init(),
+            },
+        },
+        None => cmd::list(None),
+    }
 }
