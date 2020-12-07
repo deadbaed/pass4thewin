@@ -9,7 +9,7 @@ pub mod tree;
 
 use structopt::StructOpt;
 
-#[derive(Debug, StructOpt)]
+#[derive(StructOpt)]
 /// pass for the windows platform
 struct CliArgs {
     // List of subcommands
@@ -26,7 +26,7 @@ struct CliArgs {
     clipboard: bool,
 }
 
-#[derive(Debug, StructOpt)]
+#[derive(StructOpt)]
 enum Command {
     /// Initiate password store
     Init {
@@ -102,7 +102,7 @@ enum Command {
     Git(GitCommands),
 }
 
-#[derive(Debug, StructOpt)]
+#[derive(StructOpt)]
 enum GitCommands {
     /// Initiate git repository
     Init,
@@ -110,12 +110,13 @@ enum GitCommands {
 
 fn main() {
     let cli_args = CliArgs::from_args();
-    println!("{:?}", cli_args);
 
+    // If a password is passed, pass it to show command
     if let Some(password) = cli_args.password {
         cmd::show(&password, cli_args.line, cli_args.clipboard)
     }
 
+    // Run commands
     match cli_args.cmd {
         Some(cmd) => match cmd {
             Command::Init { gpg_id } => cmd::init(&gpg_id),
