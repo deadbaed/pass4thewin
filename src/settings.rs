@@ -36,13 +36,13 @@ impl Settings {
         Ok(settings)
     }
 
-    /// look for settings file in folder where binary is ran from
+    /// Look for settings file in folder where binary is ran from
     fn from_binary_path() -> anyhow::Result<Self> {
         let path = construct_path_from_binary_path()?;
         Self::from_path(&path)
     }
 
-    /// look for settings file in `%APPDATA%\ID_ORGANIZATION\ID_APPLICATION\config`
+    /// Look for settings file in `%APPDATA%\ID_ORGANIZATION\ID_APPLICATION\config`
     fn from_roaming_app_data() -> anyhow::Result<Self> {
         let path = construct_path_from_app_data()?;
         Self::from_path(&path)
@@ -106,9 +106,9 @@ impl Settings {
     }
 }
 
-/// generate settings path based off current binary's path
+/// Generate settings path from current binary's path
 ///
-/// example: BINARY_PATH/pass4thewin.toml
+/// Example: BINARY_PATH/pass4thewin.toml
 fn construct_path_from_binary_path() -> anyhow::Result<PathBuf> {
     let mut path = std::env::current_exe()?;
     path.set_file_name(SETTINGS_FILENAME);
@@ -116,9 +116,9 @@ fn construct_path_from_binary_path() -> anyhow::Result<PathBuf> {
     Ok(path)
 }
 
-/// generate settings path based off windows's appdata
+/// Generate settings path from windows's appdata folder
 ///
-/// should be located at `%APPDATA%\ID_ORGANIZATION\ID_APPLICATION\config\pass4thewin.toml`
+/// Path should look like `%APPDATA%\ID_ORGANIZATION\ID_APPLICATION\config\pass4thewin.toml`
 fn construct_path_from_app_data() -> anyhow::Result<PathBuf> {
     let proj_dir = ProjectDirs::from(ID_QUALIFIER, ID_ORGANIZATION, ID_APPLICATION)
         .context("Failed to lookup settings folder in the Windows Known Folder API.")?;

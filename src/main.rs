@@ -10,6 +10,7 @@ pub mod sync;
 pub mod tree;
 
 use crate::settings::Settings;
+use std::path::PathBuf;
 use structopt::StructOpt;
 
 #[derive(StructOpt)]
@@ -33,11 +34,11 @@ struct CliArgs {
 enum Command {
     /// Initiate password store
     Init {
-        /// Key ID of the PGP key to use
-        gpg_id: String,
+        /// Location of PGP key to use
+        pgp_key: PathBuf,
         #[structopt(short = "p", long = "path")]
         /// Location of password store
-        path: Option<String>,
+        path: Option<PathBuf>,
     },
     #[structopt(name = "ls")]
     /// List passwords
@@ -114,11 +115,10 @@ enum GitCommands {
     Init,
 }
 
-fn main() {
+fn main() -> anyhow::Result<()> {
     let cli_args = CliArgs::from_args();
 
     let mut settings = Settings::try_load();
-    settings.write().unwrap();
 
     // If a password is passed, pass it to show command
     if let Some(password) = cli_args.password {
@@ -128,7 +128,7 @@ fn main() {
     // Run commands
     match cli_args.cmd {
         Some(cmd) => match cmd {
-            Command::Init { gpg_id, path } => cmd::init(&gpg_id, path),
+            Command::Init { pgp_key, path } => cmd::init(&pgp_key, path),
             Command::List { password } => cmd::list(password),
             Command::Find { search } => cmd::find(&search),
             Command::Show {
@@ -165,4 +165,5 @@ fn main() {
         },
         None => cmd::list(None),
     }
+    settings.write()
 }
