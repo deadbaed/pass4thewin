@@ -66,7 +66,16 @@ impl Settings {
 
             // If there is no existing settings file, use Windows AppData folder to store settings
             None => match construct_path_from_app_data() {
-                Ok(path) => self.write_to_file(&path),
+                Ok(path) => {
+                    println!("Saving settings to '{}'", path.display());
+
+                    // Create folder if it doesn't exist
+                    let parent = path.parent().context("Failed to find parent folder")?;
+                    std::fs::create_dir_all(parent)?;
+
+                    // Write to file
+                    self.write_to_file(&path)
+                }
                 Err(e) => Err(e),
             },
         }
