@@ -93,3 +93,36 @@ pub fn init(pgp_key: &Path, path: Option<PathBuf>, settings: &mut Settings) -> a
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+
+    use crate::cmd::init::new_password_store;
+    use std::fs::File;
+    use std::io::Read;
+    use std::path::PathBuf;
+    use tempfile::tempdir;
+
+    #[test]
+    fn create_password_store() -> Result<(), Box<dyn std::error::Error>> {
+        let tmp_dir = tempdir()?;
+
+        let secret_key_path = format!("{}\\tests\\secret-key.asc", env!("CARGO_MANIFEST_DIR"));
+
+        let password_store_path = new_password_store(
+            secret_key_path.as_ref(),
+            Some(PathBuf::from(tmp_dir.path())),
+        )?;
+
+        let gpg_id_path = password_store_path.join(".gpg-id");
+        assert_eq!(gpg_id_path.is_file(), true);
+
+        // Print contents of pgp-id
+        let mut gpg_id = File::open(&gpg_id_path)?;
+        let mut contents = String::new();
+        gpg_id.read_to_string(&mut contents)?;
+        println!("Contents: {:?}", contents);
+
+        Ok(())
+    }
+}

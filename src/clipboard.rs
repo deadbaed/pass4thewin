@@ -16,7 +16,7 @@ mod tests {
     use crate::clipboard::{get_clipboard, set_clipboard};
 
     #[test]
-    fn test_clipboard() {
+    fn copy_text_to_clipboard() {
         let to_clipboard = "this is a test string";
 
         assert_eq!(set_clipboard(to_clipboard), true);
