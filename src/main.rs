@@ -1,13 +1,13 @@
-pub mod clipboard;
+mod clipboard;
 pub mod cmd;
-pub mod constants;
-pub mod decrypt;
-pub mod encrypt;
-pub mod notification;
-pub mod qrcode;
+mod constants;
+mod decrypt;
+mod encrypt;
+mod notification;
+mod qrcode;
 pub mod settings;
-pub mod sync;
-pub mod tree;
+mod sync;
+mod tree;
 
 use crate::settings::Settings;
 use std::path::PathBuf;
@@ -125,10 +125,10 @@ fn main() -> anyhow::Result<()> {
         cmd::show(&password, cli_args.line, cli_args.clipboard)
     }
 
-    // Run commands
+    // Run command
     match cli_args.cmd {
         Some(cmd) => match cmd {
-            Command::Init { pgp_key, path } => cmd::init(&pgp_key, path),
+            Command::Init { pgp_key, path } => cmd::init(&pgp_key, path, &mut settings)?,
             Command::List { password } => cmd::list(password),
             Command::Find { search } => cmd::find(&search),
             Command::Show {
@@ -165,5 +165,6 @@ fn main() -> anyhow::Result<()> {
         },
         None => cmd::list(None),
     }
-    settings.write()
+
+    Ok(())
 }
