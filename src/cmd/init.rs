@@ -71,6 +71,10 @@ fn new_password_store(pgp_key: &Path, path: Option<PathBuf>) -> anyhow::Result<P
 
     // sign `.gpg-id` with key ??
 
+    println!(
+        "Created new password store at location {}",
+        password_store_path.display()
+    );
     Ok(password_store_path)
 }
 
@@ -90,6 +94,11 @@ pub fn init(pgp_key: &Path, path: Option<PathBuf>, settings: &mut Settings) -> a
     settings.set_pgp_key_path(pgp_key);
     settings.set_password_store_path(&password_store_path);
     settings.write()?;
+
+    println!(
+        "Storing settings in {}",
+        settings.get_settings_path()?.display()
+    );
 
     Ok(())
 }
