@@ -1,5 +1,5 @@
 use crate::constants::{ID_APPLICATION, ID_ORGANIZATION, ID_QUALIFIER, SETTINGS_FILENAME};
-use anyhow::Context;
+use anyhow::{anyhow, Context};
 use directories_next::ProjectDirs;
 use serde::{Deserialize, Serialize};
 use std::fs::File;
@@ -11,8 +11,8 @@ pub struct Settings {
     #[serde(skip)]
     path: Option<PathBuf>,
 
-    password_store: PathBuf,
-    pgp_key: PathBuf,
+    password_store: Option<PathBuf>,
+    pgp_key: Option<PathBuf>,
 }
 
 impl Settings {
@@ -98,11 +98,25 @@ impl Settings {
     }
 
     pub fn set_password_store_path(&mut self, path: &Path) {
-        self.password_store = PathBuf::from(path);
+        self.password_store = Some(PathBuf::from(path));
+    }
+
+    pub fn get_password_store_path(&self) -> Result<&Path, anyhow::Error> {
+        match &self.password_store {
+            Some(path) => Ok(&path),
+            None => Err(anyhow!("Password store is not initiated")),
+        }
     }
 
     pub fn set_pgp_key_path(&mut self, path: &Path) {
-        self.pgp_key = PathBuf::from(path);
+        self.pgp_key = Some(PathBuf::from(path));
+    }
+
+    pub fn get_pgp_key_path(&self) -> Result<&Path, anyhow::Error> {
+        match &self.pgp_key {
+            Some(path) => Ok(&path),
+            None => Err(anyhow!("Password store is not initiated")),
+        }
     }
 }
 
