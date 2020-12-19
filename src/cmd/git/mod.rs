@@ -8,7 +8,10 @@ pub fn init(settings: &Settings) -> anyhow::Result<()> {
     // try to open repo
     if Repository::open(&password_store_path).is_ok() {
         // if ok, go out
-        println!("Git repository is already initialized");
+        println!(
+            "Git repository is already initialized for password store {}",
+            password_store_path.display()
+        );
         return Ok(());
     }
 

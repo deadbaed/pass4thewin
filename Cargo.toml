@@ -16,6 +16,7 @@ structopt = "0.3"
 directories-next = "2.0.0"
 serde = { version = "1.0", features = ["derive"] }
 toml = "0.5.7"
+dunce = "1.0.1"
 
 [dev-dependencies]
 tempfile = "3"
