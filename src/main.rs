@@ -160,7 +160,7 @@ fn main() -> anyhow::Result<()> {
                 force,
             } => cmd::copy(&old_path, &new_path, force),
             Command::Git(git_cmd) => match git_cmd {
-                GitCommands::Init => cmd::git::init(),
+                GitCommands::Init => cmd::git::init(&settings)?,
             },
         },
         None => cmd::list(None),

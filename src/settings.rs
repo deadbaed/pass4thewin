@@ -118,6 +118,13 @@ impl Settings {
             None => Err(anyhow!("Password store is not initiated")),
         }
     }
+
+    pub fn get_settings_path(&self) -> Result<&Path, anyhow::Error> {
+        match &self.path {
+            Some(path) => Ok(&path),
+            None => Err(anyhow!("Settings file does not exist")),
+        }
+    }
 }
 
 /// Generate settings path from current binary's path
