@@ -36,7 +36,7 @@ fn extract_fingerprint(key: &Path) -> anyhow::Result<Fingerprint> {
 /// Get path of a potential password store based off provided path
 fn get_password_store_path(path: &Option<PathBuf>) -> anyhow::Result<PathBuf> {
     let mut new_path = match path {
-        Some(path) => path.clone(),
+        Some(path) => std::fs::canonicalize(&path)?,
         None => match BaseDirs::new() {
             Some(home_dir) => PathBuf::from(home_dir.home_dir()),
             None => return Err(anyhow!("Failed to get home directory path")),
@@ -83,15 +83,17 @@ pub fn init(pgp_key: &Path, path: Option<PathBuf>, settings: &mut Settings) -> a
     let mut password_store_path = get_password_store_path(&path)?;
     password_store_path.push(".gpg-id");
 
+    let pgp_key = std::fs::canonicalize(pgp_key)?;
+
     // Create new password store if there is not
     if !password_store_path.is_file() {
-        password_store_path = new_password_store(pgp_key, path)?;
+        password_store_path = new_password_store(&pgp_key, path)?;
     } else {
         password_store_path.pop();
     }
 
     // Set and write settings
-    settings.set_pgp_key_path(pgp_key);
+    settings.set_pgp_key_path(&pgp_key);
     settings.set_password_store_path(&password_store_path);
     settings.write()?;
 
