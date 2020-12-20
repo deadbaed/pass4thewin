@@ -59,7 +59,7 @@ fn new_password_store(pgp_key: &Path, path: Option<PathBuf>) -> anyhow::Result<P
     std::fs::create_dir_all(&password_store_path)?;
 
     // Display fingerprint in hex
-    let content = format!("0x{:X}", fingerprint);
+    let content = format!("0x{:X}\n", fingerprint);
 
     // Construct path of `.gpg-id`
     let mut gpg_id_path = password_store_path.clone();
