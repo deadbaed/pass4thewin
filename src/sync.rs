@@ -1,5 +1,5 @@
 use anyhow::anyhow;
-use git2::{Commit, Error, ObjectType, Oid, Repository, Tree};
+use git2::{Commit, Error, ObjectType, Oid, Repository};
 use std::path::{Path, PathBuf};
 
 /// Initiate repository
@@ -14,21 +14,24 @@ pub fn init_repo(path: &Path) -> anyhow::Result<Repository> {
 }
 
 /// Create initial commit with no files
-fn create_initial_commit(repo: &Repository) -> Result<Oid, Error> {
+fn create_initial_commit(repo: &Repository) -> Result<(), Error> {
     let sig = repo.signature()?;
 
     // Create empty tree to commit
-    let empty_oid = {
+    let tree_id = {
         // Get repo index
         let mut index = repo.index()?;
 
         // Write index to tree
         index.write_tree()?
     };
-    let tree = repo.find_tree(empty_oid)?;
+
+    let tree = repo.find_tree(tree_id)?;
 
     // Make commit with no parent commits (since it's the first one)
-    repo.commit(Some("HEAD"), &sig, &sig, "Initial commit", &tree, &[])
+    repo.commit(Some("HEAD"), &sig, &sig, "Initial commit", &tree, &[])?;
+
+    Ok(())
 }
 
 /// Get HEAD commit
@@ -38,27 +41,32 @@ fn get_head_commit(repo: &Repository) -> Result<Commit, Error> {
         .map_err(|_| Error::from_str("failed to find commit"))
 }
 
-/// Make a commit with a tree and a message to current branch
-fn create_commit(repo: &Repository, tree: &Tree, message: &str) -> Result<Oid, Error> {
+/// Create a commit with a message
+fn create_commit(repo: &Repository, message: &str) -> Result<Oid, Error> {
+    // Write tree from index
+    let tree = repo.index()?.write_tree()?;
+    let tree = repo.find_tree(tree)?;
+
+    // Get user information
     let sig = repo.signature()?;
+
+    // Get parent commit
     let parent_commit = get_head_commit(repo)?;
 
-    repo.commit(Some("HEAD"), &sig, &sig, message, tree, &[&parent_commit])
+    // Create new commit
+    repo.commit(Some("HEAD"), &sig, &sig, message, &tree, &[&parent_commit])
 }
 
-/// Create tree
-fn add_file<'a>(repo: &'a Repository, path: &Path) -> Result<Tree<'a>, Error> {
+/// Add file to staging index
+fn add_file(repo: &Repository, path: &Path) -> Result<(), Error> {
     // Get repo index
     let mut index = repo.index()?;
 
     // Add path to index
     index.add_path(path)?;
 
-    // Write index as tree
-    let oid = index.write_tree()?;
-
-    // Get tree from newly written index
-    repo.find_tree(oid)
+    // Write index
+    index.write()
 }
 
 /// Gets relative path of a file based of the root of the git repo
@@ -96,9 +104,9 @@ fn add_file_commit_with_message(
         }
     };
 
-    let tree_file_added = add_file(&repo, &relative_path_file)?;
+    add_file(&repo, &relative_path_file)?;
     let commit_msg = format!("{} {}", message, relative_path_file.display());
-    create_commit(&repo, &tree_file_added, &commit_msg)?;
+    create_commit(&repo, &commit_msg)?;
 
     Ok(())
 }
