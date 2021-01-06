@@ -1,5 +1,6 @@
+use crate::constants::ID_APPLICATION;
 use anyhow::anyhow;
-use git2::{Commit, Error, ObjectType, Oid, Repository, Tree};
+use git2::{Commit, Error, ObjectType, Oid, Repository, Signature, Tree};
 use std::path::{Path, PathBuf};
 
 /// Initiate repository
@@ -26,10 +27,25 @@ fn write_index_to_tree(repo: &Repository) -> Result<Tree, Error> {
     repo.find_tree(tree)
 }
 
+/// Get current git signature or create one
+fn get_signature(repo: &Repository) -> Result<Signature, Error> {
+    // Try to get local signature
+    if let Ok(sig) = repo.signature() {
+        return Ok(sig);
+    }
+
+    // Else create a signature based of user's local information
+    let username = std::env::var("%USERNAME%").unwrap_or_else(|_| ID_APPLICATION.into());
+    let hostname = std::env::var("%COMPUTERNAME%").unwrap_or_else(|_| "windows".into());
+    let email = format!("{}@{}.local", username, hostname);
+
+    Signature::now(&username, &email)
+}
+
 /// Create initial commit with no files
 fn create_initial_commit(repo: &Repository) -> Result<(), Error> {
     // Get user information
-    let sig = repo.signature()?;
+    let sig = get_signature(repo)?;
 
     let tree = write_index_to_tree(repo)?;
 
@@ -49,7 +65,7 @@ fn get_head_commit(repo: &Repository) -> Result<Commit, Error> {
 /// Create a commit with a message
 fn create_commit(repo: &Repository, message: &str) -> Result<Oid, Error> {
     // Get user information
-    let sig = repo.signature()?;
+    let sig = get_signature(repo)?;
 
     let tree = write_index_to_tree(repo)?;
 
