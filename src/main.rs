@@ -58,9 +58,9 @@ enum Command {
     /// Insert new password
     Insert {
         password: String,
-        /// Display only specific line of password file
+        /// Insert multiple lines in password file
         #[structopt(short = "m", long = "multiline")]
-        multi_line: Option<usize>,
+        multi_line: bool,
         /// Display password to terminal after inserting it
         #[structopt(short = "e", long = "echo")]
         echo: bool,
