@@ -1,5 +1,5 @@
 use anyhow::anyhow;
-use git2::{Commit, Error, ObjectType, Oid, Repository};
+use git2::{Commit, Error, ObjectType, Oid, Repository, Tree};
 use std::path::{Path, PathBuf};
 
 /// Initiate repository
@@ -13,22 +13,29 @@ pub fn init_repo(path: &Path) -> anyhow::Result<Repository> {
     Ok(repo)
 }
 
-/// Create initial commit with no files
-fn create_initial_commit(repo: &Repository) -> Result<(), Error> {
-    let sig = repo.signature()?;
-
-    // Create empty tree to commit
-    let tree_id = {
+/// Write index to a git tree
+fn write_index_to_tree(repo: &Repository) -> Result<Tree, Error> {
+    // Create tree from current index
+    let tree = {
         // Get repo index
         let mut index = repo.index()?;
 
-        // Write index to tree
+        // Write index to a tree
         index.write_tree()?
     };
 
-    let tree = repo.find_tree(tree_id)?;
+    // Return tree object
+    repo.find_tree(tree)
+}
 
-    // Make commit with no parent commits (since it's the first one)
+/// Create initial commit with no files
+fn create_initial_commit(repo: &Repository) -> Result<(), Error> {
+    // Get user information
+    let sig = repo.signature()?;
+
+    let tree = write_index_to_tree(repo)?;
+
+    // Make commit with no parent commits and with empty tree (since it's the first one)
     repo.commit(Some("HEAD"), &sig, &sig, "Initial commit", &tree, &[])?;
 
     Ok(())
@@ -43,12 +50,10 @@ fn get_head_commit(repo: &Repository) -> Result<Commit, Error> {
 
 /// Create a commit with a message
 fn create_commit(repo: &Repository, message: &str) -> Result<Oid, Error> {
-    // Write tree from index
-    let tree = repo.index()?.write_tree()?;
-    let tree = repo.find_tree(tree)?;
-
     // Get user information
     let sig = repo.signature()?;
+
+    let tree = write_index_to_tree(repo)?;
 
     // Get parent commit
     let parent_commit = get_head_commit(repo)?;
