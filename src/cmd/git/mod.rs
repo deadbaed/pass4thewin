@@ -1,5 +1,5 @@
 use crate::settings::Settings;
-use crate::sync::init_repo;
+use crate::sync::{add_commit_file, init_repo};
 use git2::Repository;
 
 pub fn init(settings: &Settings) -> anyhow::Result<()> {
@@ -16,7 +16,11 @@ pub fn init(settings: &Settings) -> anyhow::Result<()> {
     }
 
     // else create one
-    init_repo(&password_store_path)?;
+    let repo = init_repo(&password_store_path)?;
+
+    // add .gpg-id file
+    add_commit_file(&repo, &password_store_path.join(".gpg-id"))?;
+
     println!(
         "Initiated git repository for password store {}",
         password_store_path.display()

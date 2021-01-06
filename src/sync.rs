@@ -5,10 +5,8 @@ use std::path::{Path, PathBuf};
 /// Initiate repository
 pub fn init_repo(path: &Path) -> anyhow::Result<Repository> {
     let repo = Repository::init(path)?;
-    create_initial_commit(&repo)?;
 
-    // add .gpg-id file
-    add_commit_file(&repo, &path.join(".gpg-id"))?;
+    create_initial_commit(&repo)?;
 
     Ok(repo)
 }
@@ -45,7 +43,7 @@ fn create_initial_commit(repo: &Repository) -> Result<(), Error> {
 fn get_head_commit(repo: &Repository) -> Result<Commit, Error> {
     let obj = repo.head()?.resolve()?.peel(ObjectType::Commit)?;
     obj.into_commit()
-        .map_err(|_| Error::from_str("failed to find commit"))
+        .map_err(|_| Error::from_str("Failed to find HEAD commit"))
 }
 
 /// Create a commit with a message
@@ -122,4 +120,86 @@ pub fn add_commit_password(repo: &Repository, path: &Path) -> anyhow::Result<()>
 
 pub fn add_commit_file(repo: &Repository, path: &Path) -> anyhow::Result<()> {
     add_file_commit_with_message(repo, path, "Added file")
+}
+
+#[cfg(test)]
+mod tests {
+    use std::fs::File;
+    use std::io::Write;
+    use std::path::Path;
+    use tempfile::tempdir;
+
+    #[test]
+    fn init_repo() -> Result<(), Box<dyn std::error::Error>> {
+        let tmp_dir = tempdir()?;
+
+        // create git repo
+        let repo = super::init_repo(tmp_dir.path())?;
+        println!("created git repo {}", repo.path().display());
+
+        // make sure the initial commit is present
+        assert_eq!(super::get_head_commit(&repo).is_ok(), true);
+
+        Ok(())
+    }
+
+    #[test]
+    fn add_file() -> Result<(), Box<dyn std::error::Error>> {
+        let tmp_dir = tempdir()?;
+
+        // create git repo
+        let repo = super::init_repo(tmp_dir.path())?;
+        println!("created git repo {}", repo.path().display());
+
+        // create example file
+        let relative_path = Path::new("example.txt");
+        let file_path = tmp_dir.path().join(relative_path);
+        {
+            let mut file = File::create(&file_path).expect("Couldn't create file");
+            file.write_all(b"example file\n")?;
+            println!("created file {}", file_path.display());
+        }
+
+        // make sure the index is empty before
+        assert_eq!(repo.index()?.is_empty(), true);
+
+        // add file to index
+        super::add_file(&repo, &relative_path)?;
+        assert_eq!(repo.index()?.is_empty(), false);
+        println!("added file to index {}", file_path.display());
+
+        Ok(())
+    }
+
+    #[test]
+    fn commit_staging() -> Result<(), Box<dyn std::error::Error>> {
+        let tmp_dir = tempdir()?;
+
+        // create git repo
+        let repo = super::init_repo(tmp_dir.path())?;
+        println!("created git repo {}", repo.path().display());
+
+        // create example file
+        let relative_path = Path::new("example.txt");
+        let file_path = tmp_dir.path().join(relative_path);
+        {
+            let mut file = File::create(&file_path).expect("Couldn't create file");
+            file.write_all(b"example file\n")?;
+            println!("created file {}", file_path.display());
+        }
+
+        // add file to index
+        super::add_file(&repo, &relative_path)?;
+        println!("added file to index {}", file_path.display());
+
+        // commit new file
+        let commit = super::create_commit(&repo, "test commit")?;
+        println!("commit has been created");
+
+        // make sure id of new commit is the id of the HEAD commit
+        let head_commit = super::get_head_commit(&repo)?.id();
+        assert_eq!(commit, head_commit);
+
+        Ok(())
+    }
 }
