@@ -97,11 +97,6 @@ pub fn init(pgp_key: &Path, path: Option<PathBuf>, settings: &mut Settings) -> a
     settings.set_password_store_path(&password_store_path);
     settings.write()?;
 
-    println!(
-        "Storing settings in {}",
-        settings.get_settings_path()?.display()
-    );
-
     Ok(())
 }
 

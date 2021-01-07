@@ -1,4 +1,4 @@
-use crate::constants::{ID_APPLICATION, ID_ORGANIZATION, ID_QUALIFIER, SETTINGS_FILENAME};
+use crate::constants::{ID_APPLICATION, ID_ORGANIZATION, ID_QUALIFIER, SETTINGS_FILE};
 use anyhow::{anyhow, Context};
 use directories_next::ProjectDirs;
 use serde::{Deserialize, Serialize};
@@ -49,8 +49,11 @@ impl Settings {
     }
 
     /// Convert `Settings` struct and write it out to a TOML file
-    fn write_to_file(&self, path: &Path) -> anyhow::Result<()> {
+    fn write_to_file(&self) -> anyhow::Result<()> {
         let content = toml::to_string(self)?;
+
+        let path = self.get_settings_path()?;
+        println!("Storing settings in {}", path.display());
 
         let mut file = File::create(path)?;
         file.write_all(content.as_bytes())?;
@@ -62,19 +65,21 @@ impl Settings {
     pub fn write(&mut self) -> anyhow::Result<()> {
         match &self.path {
             // If we already know where the settings file is, write it directly
-            Some(path) => self.write_to_file(&path),
+            Some(path) => {
+                self.path = Some(PathBuf::from(path));
+                self.write_to_file()
+            }
 
             // If there is no existing settings file, use Windows AppData folder to store settings
             None => match construct_path_from_app_data() {
                 Ok(path) => {
-                    println!("Saving settings to '{}'", path.display());
-
                     // Create folder if it doesn't exist
                     let parent = path.parent().context("Failed to find parent folder")?;
                     std::fs::create_dir_all(parent)?;
 
                     // Write to file
-                    self.write_to_file(&path)
+                    self.path = Some(path);
+                    self.write_to_file()
                 }
                 Err(e) => Err(e),
             },
@@ -125,6 +130,21 @@ impl Settings {
             None => Err(anyhow!("Settings file does not exist")),
         }
     }
+
+    /// Display current settings
+    pub fn dump(&self) -> anyhow::Result<()> {
+        println!(
+            "Settings file location: {}",
+            self.get_settings_path()?.display()
+        );
+        println!(
+            "Password store location: {}",
+            self.get_password_store_path()?.display()
+        );
+        println!("PGP Key location: {}", self.get_pgp_key_path()?.display());
+
+        Ok(())
+    }
 }
 
 /// Generate settings path from current binary's path
@@ -132,7 +152,7 @@ impl Settings {
 /// Example: BINARY_PATH/pass4thewin.toml
 fn construct_path_from_binary_path() -> anyhow::Result<PathBuf> {
     let mut path = std::env::current_exe()?;
-    path.set_file_name(SETTINGS_FILENAME);
+    path.set_file_name(SETTINGS_FILE);
 
     Ok(path)
 }
@@ -145,7 +165,7 @@ fn construct_path_from_app_data() -> anyhow::Result<PathBuf> {
         .context("Failed to lookup settings folder in the Windows Known Folder API.")?;
 
     let mut path = PathBuf::from(proj_dir.config_dir());
-    path.push(SETTINGS_FILENAME);
+    path.push(SETTINGS_FILE);
 
     Ok(path)
 }

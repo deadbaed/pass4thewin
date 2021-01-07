@@ -107,6 +107,8 @@ enum Command {
     },
     /// If the password store is a git repository, execute some git commands
     Git(GitCommands),
+    /// Dump current settings
+    Settings,
 }
 
 #[derive(StructOpt)]
@@ -162,6 +164,7 @@ fn main() -> anyhow::Result<()> {
             Command::Git(git_cmd) => match git_cmd {
                 GitCommands::Init => cmd::git::init(&settings)?,
             },
+            Command::Settings => settings.dump()?,
         },
         None => cmd::list(None),
     }
