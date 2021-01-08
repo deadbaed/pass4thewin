@@ -33,10 +33,18 @@ impl Password {
 
                 buffer
             } else {
-                // TODO: add retype password
-                rpassword::read_password_from_tty(Some(
+                let password1 = rpassword::read_password_from_tty(Some(
                     format!("Enter password for {}: ", password_name).as_str(),
-                ))?
+                ))?;
+                let password2 = rpassword::read_password_from_tty(Some(
+                    format!("Retype password for {}: ", password_name).as_str(),
+                ))?;
+
+                if password1 != password2 {
+                    return Err(Error::new(ErrorKind::Other, "Passwords do not match"));
+                }
+
+                password1
             }
         };
 
