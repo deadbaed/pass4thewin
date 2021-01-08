@@ -1,4 +1,15 @@
-pub fn insert(password: &str, multi_line: bool, echo: bool, force: bool) {
+use crate::settings::Settings;
+
+pub fn insert(
+    password: &str,
+    multi_line: bool,
+    echo: bool,
+    force: bool,
+    settings: &Settings,
+) -> anyhow::Result<()> {
+    // Make sure password store exists
+    settings.get_password_store_path()?;
+
     println!(
         "cmd insert: password {:?} multi_line {}, echo {} force {}",
         password, multi_line, echo, force
@@ -16,4 +27,6 @@ pub fn insert(password: &str, multi_line: bool, echo: bool, force: bool) {
       7. if echo flag is on display password
 
     */
+
+    Ok(())
 }

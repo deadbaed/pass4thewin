@@ -4,6 +4,7 @@ mod constants;
 mod decrypt;
 mod encrypt;
 mod notification;
+mod password;
 mod qrcode;
 pub mod settings;
 mod sync;
@@ -143,7 +144,7 @@ fn main() -> anyhow::Result<()> {
                 multi_line,
                 echo,
                 force,
-            } => cmd::insert(&password, multi_line, echo, force),
+            } => cmd::insert(&password, multi_line, echo, force, &settings)?,
             Command::Edit { password } => cmd::edit(&password),
             Command::Generate { password, length } => cmd::generate(&password, length),
             Command::Remove {
