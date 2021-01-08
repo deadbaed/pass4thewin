@@ -1,16 +1,27 @@
 use std::io::{Error, ErrorKind, Read};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 #[derive(Default)]
 pub struct Password {
     // Path of file
-    path: Option<PathBuf>,
+    pathfile: Option<PathBuf>,
 
     // Password contents
     contents: Option<Vec<String>>,
 }
 
 impl Password {
+    pub fn set_filepath(&mut self, base_path: &Path, password_name: &str) {
+        self.pathfile = Some(base_path.join(format!("{}.gpg", password_name)));
+    }
+
+    pub fn exists(&self) -> bool {
+        match &self.pathfile {
+            Some(path) => path.exists(),
+            None => false,
+        }
+    }
+
     pub fn read(&self) {
         // open from file, decrypt here
     }
