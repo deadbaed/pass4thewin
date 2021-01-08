@@ -33,6 +33,20 @@ jobs:
           command: fmt
           args: --all -- --check
 
+  check:
+    name: Check
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - uses: actions-rs/cargo@v1
+        with:
+          command: check
+
   clippy:
     name: Clippy
     runs-on: windows-latest
