@@ -4,19 +4,19 @@ use std::path::{Path, PathBuf};
 #[derive(Default)]
 pub struct Password {
     // Path of file
-    pathfile: Option<PathBuf>,
+    path_file: Option<PathBuf>,
 
-    // Password contents
-    contents: Option<Vec<String>>,
+    // Password in plain text
+    password: Option<Vec<String>>,
 }
 
 impl Password {
     pub fn set_filepath(&mut self, base_path: &Path, password_name: &str) {
-        self.pathfile = Some(base_path.join(format!("{}.gpg", password_name)));
+        self.path_file = Some(base_path.join(format!("{}.gpg", password_name)));
     }
 
     pub fn exists(&self) -> bool {
-        match &self.pathfile {
+        match &self.path_file {
             Some(path) => path.exists(),
             None => false,
         }
@@ -24,6 +24,7 @@ impl Password {
 
     pub fn read(&self) {
         // open from file, decrypt here
+        // store file line by line: https://stackoverflow.com/questions/30801031/read-a-file-and-get-an-array-of-strings
     }
 
     pub fn write(&self) {
@@ -71,12 +72,23 @@ impl Password {
         }
 
         // Save final vector
-        self.contents = Some(output);
+        self.password = Some(output);
 
         Ok(())
     }
 
     pub fn output(&self) {
         // raw text, qr code, otp, multiple lines or not
+    }
+
+    /// Format password as a single block
+    pub fn to_string(&self) -> Option<String> {
+        let mut string = String::new();
+
+        for line in self.password.as_ref()? {
+            string.push_str(&line);
+        }
+
+        Some(string)
     }
 }

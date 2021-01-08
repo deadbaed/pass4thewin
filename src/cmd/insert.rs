@@ -1,7 +1,8 @@
 use crate::password::Password;
 use crate::settings::Settings;
-use anyhow::anyhow;
+use anyhow::{anyhow, Context};
 use dialoguer::Confirm;
+use std::io::Write;
 
 pub fn insert(
     password_name: &str,
@@ -38,11 +39,17 @@ pub fn insert(
         return Err(anyhow!("Password insertion aborted: {}", e));
     }
 
+    // Create temporary file and write password to it
+    let mut temp_file = tempfile::tempfile()?;
+    temp_file.write_all(
+        password
+            .to_string()
+            .context("There is no password, this should never happen")?
+            .as_ref(),
+    )?;
+
     /*
 
-      1. check if file exists (unless force flag is passed)
-      2. get password (single line: ask twice for confirmation, multiline open notepad or terminal?)
-      3. put contents in tmp file
       4. encrypt tmp file
       5. create folders if needed before
       5. move it to path
