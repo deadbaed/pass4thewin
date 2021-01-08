@@ -1,5 +1,5 @@
-use notify_rust::Notification;
 use crate::constants::ID_APPLICATION;
+use notify_rust::Notification;
 
 /// Send notification
 ///
