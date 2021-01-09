@@ -1,6 +1,6 @@
 use crate::password::Password;
 use crate::settings::Settings;
-use anyhow::{anyhow, Context};
+use anyhow::anyhow;
 use dialoguer::Confirm;
 use std::io::Write;
 
@@ -39,14 +39,9 @@ pub fn insert(
         return Err(anyhow!("Password insertion aborted: {}", e));
     }
 
-    // Create temporary file and write password to it
+    // Create temporary file and write plain text password to it
     let mut temp_file = tempfile::tempfile()?;
-    temp_file.write_all(
-        password
-            .to_string()
-            .context("There is no password, this should never happen")?
-            .as_ref(),
-    )?;
+    temp_file.write_all(password.to_string()?.as_ref())?;
 
     /*
 

@@ -5,7 +5,6 @@ mod decrypt;
 mod encrypt;
 mod notification;
 mod password;
-mod qrcode;
 pub mod settings;
 mod sync;
 mod tree;

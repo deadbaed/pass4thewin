@@ -1,3 +1,5 @@
+use anyhow::Context;
+use qr2term::print_qr;
 use std::io::{Error, ErrorKind, Read};
 use std::path::{Path, PathBuf};
 
@@ -78,17 +80,47 @@ impl Password {
     }
 
     pub fn output(&self) {
-        // raw text, qr code, otp, multiple lines or not
+        // raw text, otp, multiple lines or not
     }
 
     /// Format password as a single block
-    pub fn to_string(&self) -> Option<String> {
+    pub fn to_string(&self) -> anyhow::Result<String> {
         let mut string = String::new();
 
-        for line in self.password.as_ref()? {
+        let password = self
+            .password
+            .as_ref()
+            .context("There is no password, this should never happen")?;
+
+        for line in password {
             string.push_str(&line);
         }
 
-        Some(string)
+        Ok(string)
+    }
+
+    /// Get specific line of password
+    pub fn line(&self, line: usize) -> Option<&String> {
+        let line = {
+            // Try to prevent from accessing line `-1`
+            if line == 0 {
+                line
+            } else {
+                // We start counting from 0, remember?
+                line - 1
+            }
+        };
+
+        self.password.as_ref()?.get(line)
+    }
+
+    /// Format password as a qr code, written directly to [stdout]
+    ///
+    /// [stdout]: std::io::stdout
+    pub fn to_qrcode(&self) -> anyhow::Result<()> {
+        match print_qr(self.to_string()?) {
+            Ok(()) => Ok(()),
+            Err(e) => Err(e.into()),
+        }
     }
 }
