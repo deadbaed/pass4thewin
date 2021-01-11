@@ -1,5 +1,9 @@
+use crate::encrypt::encrypt;
 use anyhow::Context;
 use qr2term::print_qr;
+use sequoia_openpgp::parse::Parse;
+use sequoia_openpgp::Cert;
+use std::fs::File;
 use std::io::{Error, ErrorKind, Read};
 use std::path::{Path, PathBuf};
 
@@ -33,8 +37,21 @@ impl Password {
         // store file line by line: https://stackoverflow.com/questions/30801031/read-a-file-and-get-an-array-of-strings
     }
 
-    pub fn write(&self) {
-        // write to file, encrypt here, force writing or not
+    /// Encrypt the password using a key contained in the file `key`
+    pub fn encrypt_with_key(&self, key: &Path) -> anyhow::Result<()> {
+        // Create output file
+        let path = self
+            .get_filepath()
+            .context("Path of password is not set (this should not happen)")?;
+        let mut output = File::create(path)?;
+
+        // Get pgp key
+        let cert = Cert::from_file(key).context("Failed to load key from file")?;
+
+        // Get password contents
+        let contents = self.to_string()?;
+
+        encrypt(&contents, &mut output, &cert)
     }
 
     /// Get password from terminal

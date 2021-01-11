@@ -1,7 +1,6 @@
-use crate::encrypt::encrypt_path;
 use crate::password::Password;
 use crate::settings::Settings;
-use anyhow::{anyhow, Context};
+use anyhow::anyhow;
 use dialoguer::Confirm;
 
 pub fn insert(
@@ -39,23 +38,15 @@ pub fn insert(
         return Err(anyhow!("Password insertion aborted: {}", e));
     }
 
-    let encrypted_file = encrypt_path(
-        password
-            .get_filepath()
-            .context("Path of password is not set (this should not happen)")?,
-        settings.get_pgp_key_path()?,
-        password.to_string()?.as_ref(),
-    )?;
+    // Encrypt password and write output to file
+    password.encrypt_with_key(settings.get_pgp_key_path()?)?;
 
-    /*
+    // TODO: git add, git commit
 
-      4. encrypt tmp file
-      5. create folders if needed before
-      5. move it to path
-      6. add commit
-      7. if echo flag is on display password
-
-    */
+    // Display password if echo flag is passed
+    if echo {
+        println!("{}", password.to_string()?);
+    }
 
     Ok(())
 }
