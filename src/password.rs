@@ -43,6 +43,10 @@ impl Password {
         let path = self
             .get_filepath()
             .context("Path of password is not set (this should not happen)")?;
+
+        let parent_path = path.parent().context("Get parent folder")?;
+        std::fs::create_dir_all(parent_path).context("Creating folders for password")?;
+
         let mut output = File::create(path)?;
 
         // Get pgp key

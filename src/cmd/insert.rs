@@ -45,7 +45,7 @@ pub fn insert(
 
     // Display password if echo flag is passed
     if echo {
-        println!("{}", password.to_string()?);
+        println!("====\n{}", password.to_string()?);
     }
 
     Ok(())
