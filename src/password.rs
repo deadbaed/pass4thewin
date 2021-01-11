@@ -58,6 +58,25 @@ impl Password {
         encrypt(&contents, &mut output, &cert)
     }
 
+    #[cfg(test)]
+    pub fn from_single_line(s: &str) -> Self {
+        let mut vec = Vec::new();
+        vec.push(s.to_string());
+
+        Self {
+            path_file: None,
+            password: Some(vec),
+        }
+    }
+
+    #[cfg(test)]
+    pub fn from_multi_line(v: Vec<String>) -> Self {
+        Self {
+            path_file: None,
+            password: Some(v),
+        }
+    }
+
     /// Get password from terminal
     pub fn terminal_input(&mut self, password_name: &str, multi_line: bool) -> Result<(), Error> {
         // Get input

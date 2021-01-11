@@ -50,3 +50,70 @@ pub fn insert(
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::cmd::init::new_password_store;
+    use crate::password::Password;
+    use std::path::PathBuf;
+    use tempfile::tempdir;
+
+    fn create_password_store() -> anyhow::Result<PathBuf> {
+        let tmp_dir = tempdir()?;
+
+        let secret_key_path = format!("{}\\tests\\secret-key.asc", env!("CARGO_MANIFEST_DIR"));
+
+        new_password_store(
+            secret_key_path.as_ref(),
+            Some(PathBuf::from(tmp_dir.path())),
+        )
+    }
+
+    #[test]
+    fn insert_single_line() -> anyhow::Result<()> {
+        let password_contents = "my_super_secure_password";
+        let password_name = "folder/password";
+        let password_store = create_password_store()?;
+
+        let mut password = Password::from_single_line(password_contents);
+        password.set_filepath(&password_store, password_name);
+
+        // Make sure the file does not exist
+        assert_eq!(password.get_filepath().unwrap().exists(), false);
+
+        password.encrypt_with_key(
+            format!("{}\\tests\\secret-key.asc", env!("CARGO_MANIFEST_DIR")).as_ref(),
+        )?;
+
+        // File should exist now
+        assert_eq!(password.get_filepath().unwrap().exists(), true);
+
+        Ok(())
+    }
+
+    #[test]
+    fn insert_multi_line() -> anyhow::Result<()> {
+        let mut password_contents = Vec::new();
+        password_contents.push("multi\n".to_string());
+        password_contents.push("line\n".to_string());
+        password_contents.push("password\n".to_string());
+
+        let password_name = "folder/password";
+        let password_store = create_password_store()?;
+
+        let mut password = Password::from_multi_line(password_contents);
+        password.set_filepath(&password_store, password_name);
+
+        // Make sure the file does not exist
+        assert_eq!(password.get_filepath().unwrap().exists(), false);
+
+        password.encrypt_with_key(
+            format!("{}\\tests\\secret-key.asc", env!("CARGO_MANIFEST_DIR")).as_ref(),
+        )?;
+
+        // File should exist now
+        assert_eq!(password.get_filepath().unwrap().exists(), true);
+
+        Ok(())
+    }
+}

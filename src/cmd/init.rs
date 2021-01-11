@@ -50,7 +50,7 @@ fn get_password_store_path(path: &Option<PathBuf>) -> anyhow::Result<PathBuf> {
 /// Create new password store on path with provided pgp key
 ///
 /// Returns path of new password store
-fn new_password_store(pgp_key: &Path, path: Option<PathBuf>) -> anyhow::Result<PathBuf> {
+pub fn new_password_store(pgp_key: &Path, path: Option<PathBuf>) -> anyhow::Result<PathBuf> {
     // Extract fingerprint from file
     let fingerprint = extract_fingerprint(pgp_key)?;
 
