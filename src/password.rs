@@ -13,6 +13,10 @@ pub struct Password {
 }
 
 impl Password {
+    pub fn get_filepath(&self) -> Option<&PathBuf> {
+        self.path_file.as_ref()
+    }
+
     pub fn set_filepath(&mut self, base_path: &Path, password_name: &str) {
         self.path_file = Some(base_path.join(format!("{}.gpg", password_name)));
     }
@@ -50,6 +54,11 @@ impl Password {
                 let password1 = rpassword::read_password_from_tty(Some(
                     format!("Enter password for {}: ", password_name).as_str(),
                 ))?;
+
+                // Make sure first entry is not empty to move forward
+                if password1.is_empty() {
+                    return Err(Error::new(ErrorKind::Other, "Empty password"));
+                }
                 let password2 = rpassword::read_password_from_tty(Some(
                     format!("Retype password for {}: ", password_name).as_str(),
                 ))?;
@@ -64,13 +73,38 @@ impl Password {
 
         let mut output = Vec::new();
 
-        // Insert line by line to final vector
-        for line in raw_input.lines() {
-            output.push(line.to_string());
+        // Iterator over all lines from input
+        let mut iter = raw_input.lines();
+
+        // Get first line
+        let mut first = match iter.next() {
+            Some(first) => first.to_string(),
+            None => return Err(Error::new(ErrorKind::Other, "Empty password")),
+        };
+
+        // Try to get second line (if it's a multiline input)
+        match iter.next() {
+            Some(second) => {
+                // If input is multiline, add a unix newline for first line
+                first.push('\n');
+                output.push(first);
+
+                // Do the same for the second line (otherwise it will be lost)
+                let mut second = second.to_string();
+                second.push('\n');
+                output.push(second);
+            }
+            // If there is no second line return first line without newline
+            None => output.push(first),
         }
 
-        if output.is_empty() {
-            return Err(Error::new(ErrorKind::Other, "Empty password"));
+        // Iterate over the rest of the multiline input
+        for line in iter {
+            // Add unix newline character at the end of each line
+            let mut line = line.to_string();
+            line.push('\n');
+
+            output.push(line);
         }
 
         // Save final vector

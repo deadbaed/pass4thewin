@@ -1,8 +1,8 @@
+use crate::encrypt::encrypt_path;
 use crate::password::Password;
 use crate::settings::Settings;
-use anyhow::anyhow;
+use anyhow::{anyhow, Context};
 use dialoguer::Confirm;
-use std::io::Write;
 
 pub fn insert(
     password_name: &str,
@@ -39,9 +39,13 @@ pub fn insert(
         return Err(anyhow!("Password insertion aborted: {}", e));
     }
 
-    // Create temporary file and write plain text password to it
-    let mut temp_file = tempfile::tempfile()?;
-    temp_file.write_all(password.to_string()?.as_ref())?;
+    let encrypted_file = encrypt_path(
+        password
+            .get_filepath()
+            .context("Path of password is not set (this should not happen)")?,
+        settings.get_pgp_key_path()?,
+        password.to_string()?.as_ref(),
+    )?;
 
     /*
 

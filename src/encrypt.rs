@@ -5,7 +5,7 @@ use sequoia_openpgp::serialize::stream::{Encryptor, LiteralWriter, Message};
 use sequoia_openpgp::Cert;
 use std::fs::File;
 use std::io::Write;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 fn encrypt(
     plaintext: &str,
@@ -42,18 +42,12 @@ fn encrypt(
     Ok(())
 }
 
-/// Encrypt the file `path` using a key contained in the file `key`
-///
-/// Return path of encrypted file
-pub fn encrypt_file(path: &Path, key: &Path) -> anyhow::Result<PathBuf> {
-    let file_contents = std::fs::read_to_string(path)?;
-
-    // Use same filename as original file, only change the extension
-    let output_path = path.with_extension("gpg");
-    let mut output = File::create(&output_path)?;
+/// Encrypt the string `contents` put it in file `path` using a key contained in the file `key`
+pub fn encrypt_path(path: &Path, key: &Path, contents: &str) -> anyhow::Result<()> {
     let cert = Cert::from_file(key).context("Failed to load key from file")?;
 
-    encrypt(&file_contents, &mut output, &cert)?;
+    let mut output = File::create(&path)?;
+    encrypt(&contents, &mut output, &cert)?;
 
-    Ok(output_path)
+    Ok(())
 }
