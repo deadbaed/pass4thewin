@@ -131,7 +131,7 @@ fn main() -> anyhow::Result<()> {
     match cli_args.cmd {
         Some(cmd) => match cmd {
             Command::Init { pgp_key, path } => cmd::init(&pgp_key, path, &mut settings)?,
-            Command::List { password } => cmd::list(password),
+            Command::List { password } => cmd::list(password, &settings)?,
             Command::Find { search } => cmd::find(&search),
             Command::Show {
                 password,
@@ -166,7 +166,7 @@ fn main() -> anyhow::Result<()> {
             },
             Command::Settings => settings.dump()?,
         },
-        None => cmd::list(None),
+        None => cmd::list(None, &settings)?,
     }
 
     Ok(())
