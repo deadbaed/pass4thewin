@@ -162,7 +162,7 @@ fn main() -> anyhow::Result<()> {
                 force,
             } => cmd::copy(&old_path, &new_path, force),
             Command::Git(git_cmd) => match git_cmd {
-                GitCommands::Init => cmd::git::init(&settings)?,
+                GitCommands::Init => cmd::git::init(settings.get_password_store_path()?)?,
             },
             Command::Settings => settings.dump()?,
         },

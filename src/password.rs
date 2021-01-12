@@ -64,16 +64,16 @@ impl Password {
         vec.push(s.to_string());
 
         Self {
-            path_file: None,
             password: Some(vec),
+            ..Default::default()
         }
     }
 
     #[cfg(test)]
     pub fn from_multi_line(v: Vec<String>) -> Self {
         Self {
-            path_file: None,
             password: Some(v),
+            ..Default::default()
         }
     }
 

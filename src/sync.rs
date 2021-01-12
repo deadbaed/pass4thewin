@@ -1,5 +1,6 @@
 use crate::constants::ID_APPLICATION;
-use anyhow::anyhow;
+use crate::password::Password;
+use anyhow::{anyhow, Context};
 use git2::{Commit, Error, ObjectType, Oid, Repository, Signature, Tree};
 use std::path::{Path, PathBuf};
 
@@ -56,7 +57,7 @@ fn create_initial_commit(repo: &Repository) -> Result<(), Error> {
 }
 
 /// Get HEAD commit
-fn get_head_commit(repo: &Repository) -> Result<Commit, Error> {
+pub fn get_head_commit(repo: &Repository) -> Result<Commit, Error> {
     let obj = repo.head()?.resolve()?.peel(ObjectType::Commit)?;
     obj.into_commit()
         .map_err(|_| Error::from_str("Failed to find HEAD commit"))
@@ -92,7 +93,7 @@ fn add_file(repo: &Repository, path: &Path) -> Result<(), Error> {
 ///
 /// repo: git repository (will be used as base path
 /// full_path: full path of file to extract relative path
-fn get_relative_path(repo: &Repository, full_path: &Path) -> Option<PathBuf> {
+pub fn get_relative_path(repo: &Repository, full_path: &Path) -> Option<PathBuf> {
     // We want the root of the repo, *without* the git folder
     let path_repo = repo.path().parent()?;
 
@@ -130,7 +131,11 @@ fn add_file_commit_with_message(
     Ok(())
 }
 
-pub fn add_commit_password(repo: &Repository, path: &Path) -> anyhow::Result<()> {
+pub fn add_commit_password(repo: &Repository, password: &Password) -> anyhow::Result<()> {
+    let path = password
+        .get_filepath()
+        .context("Path of password is not set (this should not happen)")?;
+
     add_file_commit_with_message(repo, path, "Added password")
 }
 

@@ -1,10 +1,8 @@
-use crate::settings::Settings;
 use crate::sync::{add_commit_file, init_repo};
 use git2::Repository;
+use std::path::Path;
 
-pub fn init(settings: &Settings) -> anyhow::Result<()> {
-    let password_store_path = settings.get_password_store_path()?;
-
+pub fn init(password_store_path: &Path) -> anyhow::Result<()> {
     // try to open repo
     if Repository::open(&password_store_path).is_ok() {
         // if ok, go out
