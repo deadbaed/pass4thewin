@@ -34,7 +34,7 @@ impl Password {
     }
 
     /// Open password in file and decrypt it with `key`
-    pub fn open_decrypt(&self, key_path: &Path) -> anyhow::Result<()> {
+    pub fn open_decrypt(&mut self, key_path: &Path) -> anyhow::Result<()> {
         let file_path = self
             .get_filepath()
             .context("Path of password is not set (this should not happen)")?;
@@ -42,9 +42,11 @@ impl Password {
         // Attempt to decrypt password, result will be a one-line string
         let raw_file = decrypt(file_path, key_path)?;
 
-        println!("{:?}", raw_file);
+        // Store lines in vector
+        let vec = string_to_vec(&raw_file).context("Failed to parse password")?;
 
-        // store file line by line: https://stackoverflow.com/questions/30801031/read-a-file-and-get-an-array-of-strings
+        // Save vector
+        self.password = Some(vec);
 
         Ok(())
     }
@@ -123,41 +125,11 @@ impl Password {
             }
         };
 
-        let mut output = Vec::new();
-
-        // Iterator over all lines from input
-        let mut iter = raw_input.lines();
-
-        // Get first line
-        let mut first = match iter.next() {
-            Some(first) => first.to_string(),
+        // Convert one-line password string to vector
+        let output = match string_to_vec(&raw_input) {
+            Some(output) => output,
             None => return Err(Error::new(ErrorKind::Other, "Empty password")),
         };
-
-        // Try to get second line (if it's a multiline input)
-        match iter.next() {
-            Some(second) => {
-                // If input is multiline, add a unix newline for first line
-                first.push('\n');
-                output.push(first);
-
-                // Do the same for the second line (otherwise it will be lost)
-                let mut second = second.to_string();
-                second.push('\n');
-                output.push(second);
-            }
-            // If there is no second line return first line without newline
-            None => output.push(first),
-        }
-
-        // Iterate over the rest of the multiline input
-        for line in iter {
-            // Add unix newline character at the end of each line
-            let mut line = line.to_string();
-            line.push('\n');
-
-            output.push(line);
-        }
 
         // Save final vector
         self.password = Some(output);
@@ -209,4 +181,45 @@ impl Password {
             Err(e) => Err(e.into()),
         }
     }
+}
+
+/// Convert a one-line password to a vector
+fn string_to_vec(input: &str) -> Option<Vec<String>> {
+    let mut vec = Vec::new();
+
+    // Iterator over all lines from input
+    let mut iter = input.lines();
+
+    // Get first line
+    let mut first = match iter.next() {
+        Some(first) => first.to_string(),
+        None => return None,
+    };
+
+    // Try to get second line (if it's a multiline input)
+    match iter.next() {
+        Some(second) => {
+            // If input is multiline, add a unix newline for first line
+            first.push('\n');
+            vec.push(first);
+
+            // Do the same for the second line (otherwise it will be lost)
+            let mut second = second.to_string();
+            second.push('\n');
+            vec.push(second);
+        }
+        // If there is no second line return first line without newline
+        None => vec.push(first),
+    }
+
+    // Iterate over the rest of the multiline input
+    for line in iter {
+        // Add unix newline character at the end of each line
+        let mut line = line.to_string();
+        line.push('\n');
+
+        vec.push(line);
+    }
+
+    Some(vec)
 }
