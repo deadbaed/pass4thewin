@@ -1,5 +1,6 @@
+use anyhow::anyhow;
 use anyhow::Context;
-use sequoia_openpgp::crypto::SessionKey;
+use sequoia_openpgp::crypto::{Password, SessionKey};
 use sequoia_openpgp::packet::{key, Key, PKESK, SKESK};
 use sequoia_openpgp::parse::stream::{
     DecryptionHelper, DecryptorBuilder, MessageStructure, VerificationHelper,
@@ -15,6 +16,7 @@ use std::path::Path;
 struct Helper {
     cert: Cert,
     secret_keys: Vec<Key<key::SecretParts, key::UnspecifiedRole>>,
+    password: Option<String>,
 }
 
 impl VerificationHelper for Helper {
@@ -28,7 +30,7 @@ impl VerificationHelper for Helper {
 }
 
 impl Helper {
-    fn new(policy: &dyn Policy, cert: Cert) -> Self {
+    fn new(policy: &dyn Policy, cert: Cert, password: Option<String>) -> Self {
         // Import all secrets keys found in cert
         let secret_keys = cert
             .keys()
@@ -40,7 +42,11 @@ impl Helper {
             .map(|key| key.key().clone())
             .collect::<Vec<_>>();
 
-        Self { cert, secret_keys }
+        Self {
+            cert,
+            secret_keys,
+            password,
+        }
     }
 
     /// Try to decrypt PKESK packet with `keypair`
@@ -121,22 +127,40 @@ impl DecryptionHelper for Helper {
             }
         }
 
-        // Ask password of secret key
-        let mut keypair = loop {
-            // Prompt password to decrypt key
-            let password =
-                rpassword::read_password_from_tty(Some("Enter password to decrypt key: "))?.into();
+        let keypair = {
+            match &self.password {
+                Some(password) => {
+                    // If we already have a password to try against
+                    let algo = secret_key.pk_algo();
+                    let password = Password::from(password.clone());
+                    if let Ok(()) = secret_key.secret_mut().decrypt_in_place(algo, &password) {
+                        Some(secret_key.clone().into_keypair()?)
+                    } else {
+                        None
+                    }
+                }
+                None => loop {
+                    // Loop and ask for a password until we get a good one or user aborts decryption
+                    let password =
+                        rpassword::read_password_from_tty(Some("Enter password to decrypt key: "))?
+                            .into();
 
-            let algo = secret_key.pk_algo();
-            if let Ok(()) = secret_key.secret_mut().decrypt_in_place(algo, &password) {
-                break secret_key.clone().into_keypair()?;
-            } else {
-                eprintln!("Bad password. Please try again (press Ctrl+C to cancel)")
+                    let algo = secret_key.pk_algo();
+                    if let Ok(()) = secret_key.secret_mut().decrypt_in_place(algo, &password) {
+                        break Some(secret_key.clone().into_keypair()?);
+                    } else {
+                        eprintln!("Bad password. Please try again (press Ctrl+C to cancel)")
+                    }
+                },
             }
         };
 
+        if keypair.is_none() {
+            return Err(anyhow!("Invalid password for key"));
+        }
+
         if let Some(fingerprint) =
-            self.try_decrypt(session_key, sym_algo, &mut keypair, &mut decrypt)
+            self.try_decrypt(session_key, sym_algo, &mut keypair.unwrap(), &mut decrypt)
         {
             return Ok(Some(fingerprint));
         }
@@ -149,7 +173,7 @@ pub fn decrypt(encrypted_path: &Path, key_path: &Path) -> Result<String> {
     let policy = &mut StandardPolicy::new();
     let cert = Cert::from_file(key_path).context("Failed to load key from file")?;
 
-    let helper = Helper::new(policy, cert);
+    let helper = Helper::new(policy, cert, None);
 
     let decryptor = DecryptorBuilder::from_file(encrypted_path)
         .context(format!("Failed to open file {}", encrypted_path.display()))?;
