@@ -1,11 +1,14 @@
 use crate::password::Password;
 use crate::settings::Settings;
 use anyhow::{anyhow, Context};
+use clipboard_win::set_clipboard_string;
+use qr2term::print_qr;
 
 pub fn show(
     password_name: Option<String>,
     line: Option<usize>,
     clipboard: bool,
+    qr_code: bool,
     settings: &Settings,
 ) -> anyhow::Result<()> {
     // Check whether to run the `list` command or not
@@ -40,12 +43,34 @@ pub fn show(
     let key_path = settings.get_pgp_key_path()?;
     password.open_decrypt(key_path)?;
 
-    /*
+    // Get specific line if asked
+    let output = match line {
+        Some(line) => password
+            .line(line)
+            .context(format!("Failed to get line {} of {}", line, password_name))?
+            .into(),
+        None => password.to_string().unwrap(),
+    };
 
-    3. load file and decrypt with key
-    4. handle options and display to output
+    if qr_code {
+        return match print_qr(output) {
+            Ok(()) => Ok(()),
+            Err(e) => Err(e.into()),
+        };
+    }
 
-    */
+    if clipboard {
+        return match set_clipboard_string(&output) {
+            Ok(()) => Ok(()),
+            Err(e) => Err(anyhow!(
+                "Failed to put password `{}` to the clipboard\n{:?}",
+                password_name,
+                e
+            )),
+        };
+    }
+
+    println!("{}", output);
 
     Ok(())
 }

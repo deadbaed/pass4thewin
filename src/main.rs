@@ -1,9 +1,7 @@
-mod clipboard;
 pub mod cmd;
 mod constants;
 mod decrypt;
 mod encrypt;
-mod notification;
 mod password;
 pub mod settings;
 mod sync;
@@ -28,6 +26,9 @@ struct CliArgs {
     /// Copy password to clipboard
     #[structopt(short = "c", long = "clipboard")]
     clipboard: bool,
+    /// Display password as a qr-code
+    #[structopt(short = "q", long = "qrcode")]
+    qr_code: bool,
 }
 
 #[derive(StructOpt)]
@@ -54,6 +55,9 @@ enum Command {
         /// Copy password to clipboard
         #[structopt(short = "c", long = "clipboard")]
         clipboard: bool,
+        /// Display password as a qr-code
+        #[structopt(short = "q", long = "qrcode")]
+        qr_code: bool,
     },
     /// Insert new password
     Insert {
@@ -124,7 +128,13 @@ fn main() -> anyhow::Result<()> {
 
     // If a password is passed, pass it to show command
     if let Some(password) = cli_args.password {
-        cmd::show(Some(password), cli_args.line, cli_args.clipboard, &settings)?
+        cmd::show(
+            Some(password),
+            cli_args.line,
+            cli_args.clipboard,
+            cli_args.qr_code,
+            &settings,
+        )?
     }
 
     // Run command
@@ -137,7 +147,8 @@ fn main() -> anyhow::Result<()> {
                 password,
                 line,
                 clipboard,
-            } => cmd::show(password, line, clipboard, &settings)?,
+                qr_code,
+            } => cmd::show(password, line, clipboard, qr_code, &settings)?,
             Command::Insert {
                 password,
                 multi_line,

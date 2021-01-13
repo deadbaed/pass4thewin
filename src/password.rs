@@ -1,7 +1,6 @@
 use crate::decrypt::decrypt;
 use crate::encrypt::encrypt;
 use anyhow::Context;
-use qr2term::print_qr;
 use sequoia_openpgp::parse::Parse;
 use sequoia_openpgp::Cert;
 use std::fs::File;
@@ -137,10 +136,6 @@ impl Password {
         Ok(())
     }
 
-    pub fn output(&self) {
-        // raw text, otp, multiple lines or not
-    }
-
     /// Format password as a single block
     pub fn to_string(&self) -> anyhow::Result<String> {
         let mut string = String::new();
@@ -158,7 +153,7 @@ impl Password {
     }
 
     /// Get specific line of password
-    pub fn line(&self, line: usize) -> Option<&String> {
+    pub fn line(&self, line: usize) -> Option<&str> {
         let line = {
             // Try to prevent from accessing line `-1`
             if line == 0 {
@@ -169,17 +164,7 @@ impl Password {
             }
         };
 
-        self.password.as_ref()?.get(line)
-    }
-
-    /// Format password as a qr code, written directly to [stdout]
-    ///
-    /// [stdout]: std::io::stdout
-    pub fn to_qrcode(&self) -> anyhow::Result<()> {
-        match print_qr(self.to_string()?) {
-            Ok(()) => Ok(()),
-            Err(e) => Err(e.into()),
-        }
+        Some(self.password.as_ref()?.get(line)?.as_str())
     }
 }
 
