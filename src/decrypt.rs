@@ -19,12 +19,10 @@ struct Helper {
 
 impl VerificationHelper for Helper {
     fn get_certs(&mut self, _ids: &[KeyHandle]) -> Result<Vec<Cert>> {
-        println!("getting certs");
         Ok(Vec::new())
     }
 
     fn check(&mut self, _structure: MessageStructure) -> Result<()> {
-        println!("checking");
         Ok(())
     }
 }
@@ -57,11 +55,9 @@ impl Helper {
     where
         D: FnMut(SymmetricAlgorithm, &SessionKey) -> bool,
     {
-        println!("try_decrypt");
         match pkesk
             .decrypt(keypair, sym_algo)
             .and_then(|(algo, session_key)| {
-                println!("decrypt");
                 if decrypt(algo, &session_key) {
                     Some(session_key)
                 } else {
@@ -102,12 +98,9 @@ impl DecryptionHelper for Helper {
     where
         D: FnMut(SymmetricAlgorithm, &SessionKey) -> bool,
     {
-        println!("decrypting");
-
         // PKESK is the session key
         let session_key = &pkesks[0];
         let recipient_keyid = session_key.recipient().clone();
-        println!("recipient {}", recipient_keyid);
 
         // Get secret key to use to decrypt file
         let mut secret_key = get_secret_key_for_recipient(&self.secret_keys, recipient_keyid)
@@ -115,7 +108,6 @@ impl DecryptionHelper for Helper {
 
         // Try to use secret key without prompting for a password
         if !secret_key.secret().is_encrypted() {
-            println!("key has no password");
             if let Some(fingerprint) =
                 secret_key
                     .clone()
@@ -131,18 +123,15 @@ impl DecryptionHelper for Helper {
 
         // Ask password of secret key
         let mut keypair = loop {
-            println!("gonna ask for password");
-
             // Prompt password to decrypt key
             let password =
                 rpassword::read_password_from_tty(Some("Enter password to decrypt key: "))?.into();
 
             let algo = secret_key.pk_algo();
             if let Ok(()) = secret_key.secret_mut().decrypt_in_place(algo, &password) {
-                println!("Good password.");
                 break secret_key.clone().into_keypair()?;
             } else {
-                eprintln!("Bad password.")
+                eprintln!("Bad password. Please try again (press Ctrl+C to cancel)")
             }
         };
 

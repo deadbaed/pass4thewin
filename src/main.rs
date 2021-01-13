@@ -47,7 +47,7 @@ enum Command {
     Find { search: String },
     /// Show existing password
     Show {
-        password: String,
+        password: Option<String>,
         /// Display only specific line of password file
         #[structopt(long = "line")]
         line: Option<usize>,
@@ -124,7 +124,7 @@ fn main() -> anyhow::Result<()> {
 
     // If a password is passed, pass it to show command
     if let Some(password) = cli_args.password {
-        cmd::show(&password, cli_args.line, cli_args.clipboard)
+        cmd::show(Some(password), cli_args.line, cli_args.clipboard, &settings)?
     }
 
     // Run command
@@ -137,7 +137,7 @@ fn main() -> anyhow::Result<()> {
                 password,
                 line,
                 clipboard,
-            } => cmd::show(&password, line, clipboard),
+            } => cmd::show(password, line, clipboard, &settings)?,
             Command::Insert {
                 password,
                 multi_line,

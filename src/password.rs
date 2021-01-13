@@ -1,3 +1,4 @@
+use crate::decrypt::decrypt;
 use crate::encrypt::encrypt;
 use anyhow::Context;
 use qr2term::print_qr;
@@ -32,9 +33,20 @@ impl Password {
         }
     }
 
-    pub fn read(&self) {
-        // open from file, decrypt here
+    /// Open password in file and decrypt it with `key`
+    pub fn open_decrypt(&self, key_path: &Path) -> anyhow::Result<()> {
+        let file_path = self
+            .get_filepath()
+            .context("Path of password is not set (this should not happen)")?;
+
+        // Attempt to decrypt password, result will be a one-line string
+        let raw_file = decrypt(file_path, key_path)?;
+
+        println!("{:?}", raw_file);
+
         // store file line by line: https://stackoverflow.com/questions/30801031/read-a-file-and-get-an-array-of-strings
+
+        Ok(())
     }
 
     /// Encrypt the password using a key contained in the file `key`
