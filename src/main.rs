@@ -161,7 +161,7 @@ fn main() -> anyhow::Result<()> {
                 echo,
                 force,
             } => cmd::insert(&password, multi_line, echo, force, &settings)?,
-            Command::Edit { password } => cmd::edit(&password),
+            Command::Edit { password } => cmd::edit(&password, &settings)?,
             Command::Generate {
                 password,
                 length,

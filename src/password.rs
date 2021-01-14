@@ -100,12 +100,17 @@ impl Password {
         self.password = None;
     }
 
-    /// Get password from a single line
+    /// Set password from a single line input
     pub fn single_line_input(&mut self, s: &str) {
         let mut vec = Vec::new();
         vec.push(s.into());
 
         self.password = Some(vec);
+    }
+
+    /// Set password from a multi line input
+    pub fn multi_line_input(&mut self, s: &str) {
+        self.password = string_to_vec(s);
     }
 
     /// Get password from terminal

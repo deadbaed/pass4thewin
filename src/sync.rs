@@ -139,6 +139,14 @@ pub fn add_commit_password(repo: &Repository, password: &Password) -> anyhow::Re
     add_file_commit_with_message(repo, path, "Added password")
 }
 
+pub fn add_commit_update_password(repo: &Repository, password: &Password) -> anyhow::Result<()> {
+    let path = password
+        .get_filepath()
+        .context("Path of password is not set (this should not happen)")?;
+
+    add_file_commit_with_message(repo, path, "Updated password")
+}
+
 pub fn add_commit_file(repo: &Repository, path: &Path) -> anyhow::Result<()> {
     add_file_commit_with_message(repo, path, "Added file")
 }

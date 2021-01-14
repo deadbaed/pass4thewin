@@ -452,6 +452,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "edit"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "323032447eba6f5aca88b46d6e7815151c16c53e4128569420c09d7840db3bfc"
+dependencies = [
+ "tempfile",
+ "which",
+]
+
+[[package]]
 name = "either"
 version = "1.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -900,6 +910,7 @@ dependencies = [
  "dialoguer",
  "directories-next",
  "dunce",
+ "edit",
  "git2",
  "passwords",
  "qr2term",
@@ -1555,6 +1566,15 @@ name = "wasi"
 version = "0.9.0+wasi-snapshot-preview1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cccddf32554fecc6acb585f82a32a72e28b48f8c4c1883ddfeeeaa96f7d8e519"
+
+[[package]]
+name = "which"
+version = "3.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d011071ae14a2f6671d0b74080ae0cd8ebf3a6f8c9589a2cd45f23126fe29724"
+dependencies = [
+ "libc",
+]
 
 [[package]]
 name = "win-crypto-ng"
