@@ -43,10 +43,10 @@ pub fn insert(
     // Encrypt password and write output to file
     password.encrypt_with_key(settings.get_pgp_key_path()?)?;
 
-    // Git operations
-    let password_store_path = settings.get_password_store_path()?;
-    let repo = Repository::open(&password_store_path)?;
-    add_commit_password(&repo, &password)?;
+    // Git operations if git repo is present
+    if let Ok(repo) = Repository::open(&settings.get_password_store_path()?) {
+        add_commit_password(&repo, &password)?
+    }
 
     // Display password if echo flag is passed
     if echo {

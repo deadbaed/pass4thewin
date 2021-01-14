@@ -1,6 +1,7 @@
 use crate::decrypt::decrypt;
 use crate::encrypt::encrypt;
-use anyhow::Context;
+use anyhow::{anyhow, Context};
+use clipboard_win::set_clipboard_string;
 use sequoia_openpgp::parse::Parse;
 use sequoia_openpgp::Cert;
 use std::fs::File;
@@ -97,6 +98,14 @@ impl Password {
     #[cfg(test)]
     pub fn clean_password(&mut self) {
         self.password = None;
+    }
+
+    /// Get password from a single line
+    pub fn single_line_input(&mut self, s: &str) {
+        let mut vec = Vec::new();
+        vec.push(s.into());
+
+        self.password = Some(vec);
     }
 
     /// Get password from terminal
@@ -216,4 +225,19 @@ fn string_to_vec(input: &str) -> Option<Vec<String>> {
     }
 
     Some(vec)
+}
+
+/// Set a password to the clipboard
+pub fn set_to_clipboard(s: &str, name: &str) -> anyhow::Result<()> {
+    match set_clipboard_string(s) {
+        Ok(()) => {
+            println!("Password `{}` has been put on the clipboard", name);
+            Ok(())
+        }
+        Err(e) => Err(anyhow!(
+            "Failed to put password `{}` to the clipboard\n{:?}",
+            name,
+            e
+        )),
+    }
 }

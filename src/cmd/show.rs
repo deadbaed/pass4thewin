@@ -1,7 +1,6 @@
-use crate::password::Password;
+use crate::password::{set_to_clipboard, Password};
 use crate::settings::Settings;
 use anyhow::{anyhow, Context};
-use clipboard_win::set_clipboard_string;
 use qr2term::print_qr;
 
 pub fn show(
@@ -60,14 +59,7 @@ pub fn show(
     }
 
     if clipboard {
-        return match set_clipboard_string(&output) {
-            Ok(()) => Ok(()),
-            Err(e) => Err(anyhow!(
-                "Failed to put password `{}` to the clipboard\n{:?}",
-                password_name,
-                e
-            )),
-        };
+        return set_to_clipboard(&output, &password_name);
     }
 
     println!("{}", output);

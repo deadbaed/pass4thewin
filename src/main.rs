@@ -75,10 +75,16 @@ enum Command {
     /// Edit existing password
     Edit { password: String },
     /// Generate new password
-    /// Length is xxx if unspecified FIXME: provide actual number
     Generate {
         password: String,
+        /// Default length is 8
         length: Option<usize>,
+        /// Force insertion of password
+        #[structopt(short = "f", long = "force")]
+        force: bool,
+        /// Copy password to clipboard
+        #[structopt(short = "c", long = "clipboard")]
+        clipboard: bool,
     },
     #[structopt(name = "rm")]
     /// Delete existing password or directory
@@ -128,13 +134,13 @@ fn main() -> anyhow::Result<()> {
 
     // If a password is passed, pass it to show command
     if let Some(password) = cli_args.password {
-        cmd::show(
+        return cmd::show(
             Some(password),
             cli_args.line,
             cli_args.clipboard,
             cli_args.qr_code,
             &settings,
-        )?
+        );
     }
 
     // Run command
@@ -156,7 +162,12 @@ fn main() -> anyhow::Result<()> {
                 force,
             } => cmd::insert(&password, multi_line, echo, force, &settings)?,
             Command::Edit { password } => cmd::edit(&password),
-            Command::Generate { password, length } => cmd::generate(&password, length),
+            Command::Generate {
+                password,
+                length,
+                force,
+                clipboard,
+            } => cmd::generate(&password, length, force, clipboard, &settings)?,
             Command::Remove {
                 path,
                 recursive,
