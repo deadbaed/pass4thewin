@@ -33,13 +33,17 @@ impl Password {
     }
 
     /// Open password in file and decrypt it with `key`
-    pub fn open_decrypt(&mut self, key_path: &Path) -> anyhow::Result<()> {
+    pub fn open_decrypt(
+        &mut self,
+        key_path: &Path,
+        password: Option<String>,
+    ) -> anyhow::Result<()> {
         let file_path = self
             .get_filepath()
             .context("Path of password is not set (this should not happen)")?;
 
         // Attempt to decrypt password, result will be a one-line string
-        let raw_file = decrypt(file_path, key_path)?;
+        let raw_file = decrypt(file_path, key_path, password)?;
 
         // Store lines in vector
         let vec = string_to_vec(&raw_file).context("Failed to parse password")?;
@@ -83,11 +87,16 @@ impl Password {
     }
 
     #[cfg(test)]
-    pub fn from_multi_line(v: Vec<String>) -> Self {
+    pub fn from_multi_line(v: &Vec<String>) -> Self {
         Self {
-            password: Some(v),
+            password: Some(v.clone()),
             ..Default::default()
         }
+    }
+
+    #[cfg(test)]
+    pub fn clean_password(&mut self) {
+        self.password = None;
     }
 
     /// Get password from terminal

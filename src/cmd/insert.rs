@@ -57,7 +57,7 @@ pub fn insert(
 }
 
 #[cfg(test)]
-mod tests {
+pub mod tests {
     use crate::cmd::init::new_password_store;
     use crate::password::Password;
     use crate::sync::{add_commit_password, get_head_commit, get_relative_path};
@@ -65,7 +65,7 @@ mod tests {
     use std::path::{Path, PathBuf};
     use tempfile::tempdir;
 
-    fn create_password_store(tmp_dir: &Path) -> anyhow::Result<PathBuf> {
+    pub fn create_password_store(tmp_dir: &Path) -> anyhow::Result<PathBuf> {
         let secret_key_path = format!("{}\\tests\\secret-key.asc", env!("CARGO_MANIFEST_DIR"));
 
         new_password_store(secret_key_path.as_ref(), Some(PathBuf::from(tmp_dir)))
@@ -111,7 +111,7 @@ mod tests {
         let password_store = create_password_store(tmp_dir.path())?;
         crate::cmd::git::init(&password_store)?;
 
-        let mut password = Password::from_multi_line(password_contents);
+        let mut password = Password::from_multi_line(&password_contents);
         password.set_filepath(&password_store, password_name);
 
         // Make sure the file does not exist

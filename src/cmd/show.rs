@@ -41,7 +41,7 @@ pub fn show(
 
     // Attempt to open and decrypt password in file
     let key_path = settings.get_pgp_key_path()?;
-    password.open_decrypt(key_path)?;
+    password.open_decrypt(key_path, None)?;
 
     // Get specific line if asked
     let output = match line {
@@ -73,4 +73,67 @@ pub fn show(
     println!("{}", output);
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::password::Password;
+    use tempfile::tempdir;
+
+    #[test]
+    fn full_password() -> anyhow::Result<()> {
+        let tmp_dir = tempdir()?;
+
+        let pgp_key = format!("{}\\tests\\secret-key.asc", env!("CARGO_MANIFEST_DIR"));
+        let password_contents = "my_super_secure_password";
+        let password_name = "password";
+        let password_store = crate::cmd::insert::tests::create_password_store(&tmp_dir.path())?;
+        crate::cmd::git::init(&password_store)?;
+
+        // create password
+        let mut password = Password::from_single_line(password_contents);
+        password.set_filepath(&password_store, password_name);
+        password.encrypt_with_key(pgp_key.as_ref())?;
+
+        // clean password struct
+        password.clean_password();
+
+        // load from encrypted file with password
+        password.open_decrypt(pgp_key.as_ref(), Some("password".into()))?;
+
+        // make sure the content is the same as input
+        assert_eq!(password.to_string()?, password_contents);
+
+        Ok(())
+    }
+
+    #[test]
+    fn specific_line() -> anyhow::Result<()> {
+        let tmp_dir = tempdir()?;
+
+        let pgp_key = format!("{}\\tests\\secret-key.asc", env!("CARGO_MANIFEST_DIR"));
+        let mut password_contents = Vec::new();
+        password_contents.push("multi\n".to_string());
+        password_contents.push("line\n".to_string());
+        password_contents.push("password\n".to_string());
+        let password_name = "password";
+        let password_store = crate::cmd::insert::tests::create_password_store(&tmp_dir.path())?;
+        crate::cmd::git::init(&password_store)?;
+
+        // create password
+        let mut password = Password::from_multi_line(&password_contents);
+        password.set_filepath(&password_store, password_name);
+        password.encrypt_with_key(pgp_key.as_ref())?;
+
+        // clean password struct
+        password.clean_password();
+
+        // load from encrypted file with password
+        password.open_decrypt(pgp_key.as_ref(), Some("password".into()))?;
+
+        // make sure the content is the same as input
+        assert_eq!(password.line(2).unwrap(), password_contents.get(1).unwrap());
+
+        Ok(())
+    }
 }

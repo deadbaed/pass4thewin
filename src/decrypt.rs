@@ -169,11 +169,11 @@ impl DecryptionHelper for Helper {
     }
 }
 
-pub fn decrypt(encrypted_path: &Path, key_path: &Path) -> Result<String> {
+pub fn decrypt(encrypted_path: &Path, key_path: &Path, password: Option<String>) -> Result<String> {
     let policy = &mut StandardPolicy::new();
     let cert = Cert::from_file(key_path).context("Failed to load key from file")?;
 
-    let helper = Helper::new(policy, cert, None);
+    let helper = Helper::new(policy, cert, password);
 
     let decryptor = DecryptorBuilder::from_file(encrypted_path)
         .context(format!("Failed to open file {}", encrypted_path.display()))?;
