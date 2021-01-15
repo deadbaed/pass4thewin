@@ -64,7 +64,7 @@ pub fn get_head_commit(repo: &Repository) -> Result<Commit, Error> {
 }
 
 /// Create a commit with a message
-fn create_commit(repo: &Repository, message: &str) -> Result<Oid, Error> {
+pub fn create_commit(repo: &Repository, message: &str) -> Result<Oid, Error> {
     // Get user information
     let sig = get_signature(repo)?;
 
@@ -77,13 +77,25 @@ fn create_commit(repo: &Repository, message: &str) -> Result<Oid, Error> {
     repo.commit(Some("HEAD"), &sig, &sig, message, &tree, &[&parent_commit])
 }
 
-/// Add file to staging index
-fn add_file(repo: &Repository, path: &Path) -> Result<(), Error> {
+/// Add path to staging index
+pub fn add_path(repo: &Repository, path: &Path) -> Result<(), Error> {
     // Get repo index
     let mut index = repo.index()?;
 
     // Add path to index
     index.add_path(path)?;
+
+    // Write index
+    index.write()
+}
+
+/// Remove path from staging index
+pub fn rm_path(repo: &Repository, path: &Path) -> Result<(), Error> {
+    // Get repo index
+    let mut index = repo.index()?;
+
+    // Remove path from index
+    index.remove_path(path)?;
 
     // Write index
     index.write()
@@ -124,7 +136,7 @@ fn add_file_commit_with_message(
         }
     };
 
-    add_file(&repo, &relative_path_file)?;
+    add_path(&repo, &relative_path_file)?;
     let commit_msg = format!("{} {}", message, relative_path_file.display());
     create_commit(&repo, &commit_msg)?;
 
@@ -193,7 +205,7 @@ mod tests {
         assert_eq!(repo.index()?.is_empty(), true);
 
         // add file to index
-        super::add_file(&repo, &relative_path)?;
+        super::add_path(&repo, &relative_path)?;
         assert_eq!(repo.index()?.is_empty(), false);
         println!("added file to index {}", file_path.display());
 
@@ -218,7 +230,7 @@ mod tests {
         }
 
         // add file to index
-        super::add_file(&repo, &relative_path)?;
+        super::add_path(&repo, &relative_path)?;
         println!("added file to index {}", file_path.display());
 
         // commit new file
