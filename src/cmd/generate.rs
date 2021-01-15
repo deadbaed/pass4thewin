@@ -19,6 +19,11 @@ pub fn generate(
     // Set path of password
     password.set_filepath(settings.get_password_store_path()?, password_name);
 
+    // If path is a folder
+    if password.get_filepath().is_none() {
+        return Err(anyhow!("`{}` is a folder in password store", password_name));
+    }
+
     // Check if file exists, if so ask to overwrite if force flag is not passed
     if password.exists()
         && !force
@@ -61,6 +66,8 @@ pub fn generate(
     if clipboard {
         return set_to_clipboard(&output, &password_name);
     }
+
+    println!("Inserted `{}` in password store", password_name);
 
     // Display password
     println!("====\n{}", password.to_string()?);

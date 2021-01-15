@@ -23,12 +23,20 @@ impl Password {
     }
 
     pub fn set_filepath(&mut self, base_path: &Path, password_name: &str) {
-        self.path_file = Some(base_path.join(format!("{}.gpg", password_name)));
+        let mut p = base_path.join(password_name);
+
+        // If `password_name` is a folder, gtfo
+        if p.is_dir() {
+            self.path_file = None;
+        } else {
+            p.set_extension("gpg");
+            self.path_file = Some(p);
+        }
     }
 
     pub fn exists(&self) -> bool {
         match &self.path_file {
-            Some(path) => path.exists(),
+            Some(path) => path.is_file(),
             None => false,
         }
     }
