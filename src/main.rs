@@ -177,7 +177,7 @@ fn main() -> anyhow::Result<()> {
                 old_path,
                 new_path,
                 force,
-            } => cmd::m0ve(&old_path, &new_path, force),
+            } => cmd::m0ve(&old_path, &new_path, force, &settings)?,
             Command::Copy {
                 old_path,
                 new_path,
