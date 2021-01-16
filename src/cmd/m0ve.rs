@@ -91,7 +91,6 @@ pub fn m0ve(
 #[cfg(test)]
 mod tests {
     use crate::password::Password;
-    use crate::tree::tree;
     use tempfile::tempdir;
 
     #[test]
@@ -125,7 +124,7 @@ mod tests {
         assert_eq!(old.exists(), false);
 
         // the new file should be here
-        assert_eq!(folder_path.exists(), true);
+        assert_eq!(folder_path.is_file(), true);
 
         Ok(())
     }
@@ -136,34 +135,27 @@ mod tests {
 
         let pgp_key = format!("{}\\tests\\secret-key.asc", env!("CARGO_MANIFEST_DIR"));
         let password_contents = "my_super_secure_password";
-        let password_name = "folder/password";
+        let folder_name = "folder";
+        let password_name = format!("{}/password", folder_name);
         let password_store = crate::cmd::insert::tests::create_password_store(&tmp_dir.path())?;
 
         // create password
         let mut password = Password::from_single_line(password_contents);
-        password.set_filepath(&password_store, password_name);
+        password.set_filepath(&password_store, &password_name);
         password.encrypt_with_key(pgp_key.as_ref())?;
 
         // make sure the password exists
         assert_eq!(password.exists(), true);
-
-        println!("{}", tree(&password_store).unwrap());
 
         // create folder
         let folder = "new_folder";
         let mut folder_path = password_store.join(folder);
         std::fs::create_dir(&folder_path)?;
 
-        println!("{}", tree(&password_store).unwrap());
-
         // do the action
-        let old = password_store.join(password_name);
-        println!("old {}", old.display());
-        println!("folder path {}", folder_path.display());
+        let old = password_store.join(folder_name);
         super::move_action(&old, &folder_path, true, folder)?;
         folder_path.push(format!("{}.gpg", password_name));
-
-        println!("{}", tree(&password_store).unwrap());
 
         // the old folder should not exist anymore
         assert_eq!(old.exists(), false);
@@ -175,22 +167,70 @@ mod tests {
     }
 
     #[test]
-    fn move_file_to_root() -> anyhow::Result<()> {
-        Ok(())
-    }
-
-    #[test]
-    fn move_folder_to_root() -> anyhow::Result<()> {
-        Ok(())
-    }
-
-    #[test]
     fn rename_file() -> anyhow::Result<()> {
+        let tmp_dir = tempdir()?;
+
+        let pgp_key = format!("{}\\tests\\secret-key.asc", env!("CARGO_MANIFEST_DIR"));
+        let password_contents = "my_super_secure_password";
+        let password_name = "password";
+        let password_store = crate::cmd::insert::tests::create_password_store(&tmp_dir.path())?;
+
+        // create password
+        let mut password = Password::from_single_line(password_contents);
+        password.set_filepath(&password_store, password_name);
+        password.encrypt_with_key(pgp_key.as_ref())?;
+
+        // make sure the password exists
+        assert_eq!(password.exists(), true);
+
+        // create folder
+        let file = "new_password";
+        let file_path = password_store.join(format!("{}.gpg", file));
+
+        // do the action
+        let old = password_store.join(format!("{}.gpg", password_name));
+        super::move_action(&old, &file_path, true, file)?;
+
+        // the old file should not exist anymore
+        assert_eq!(old.exists(), false);
+
+        // the new file should be here
+        assert_eq!(file_path.is_file(), true);
+
         Ok(())
     }
 
     #[test]
     fn rename_folder() -> anyhow::Result<()> {
+        let tmp_dir = tempdir()?;
+
+        let pgp_key = format!("{}\\tests\\secret-key.asc", env!("CARGO_MANIFEST_DIR"));
+        let password_contents = "my_super_secure_password";
+        let folder_name = "folder";
+        let password_name = format!("{}/password", folder_name);
+        let password_store = crate::cmd::insert::tests::create_password_store(&tmp_dir.path())?;
+
+        // create password
+        let mut password = Password::from_single_line(password_contents);
+        password.set_filepath(&password_store, &password_name);
+        password.encrypt_with_key(pgp_key.as_ref())?;
+
+        // make sure the password exists
+        assert_eq!(password.exists(), true);
+
+        // create folder
+        let folder = "new_folder";
+        let folder_path = password_store.join(folder);
+
+        // do the action
+        let old = password_store.join(folder_name);
+        super::move_action(&old, &folder_path, true, folder)?;
+
+        // the old folder should not exist anymore
+        assert_eq!(old.exists(), false);
+
+        // the new folder should be here
+        assert_eq!(folder_path.is_dir(), true);
         Ok(())
     }
 }
