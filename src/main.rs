@@ -172,7 +172,7 @@ fn main() -> anyhow::Result<()> {
                 path,
                 recursive,
                 force,
-            } => cmd::remove(&path, recursive, force),
+            } => cmd::remove(&path, recursive, force, &settings)?,
             Command::Move {
                 old_path,
                 new_path,
