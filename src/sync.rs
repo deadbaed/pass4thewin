@@ -78,24 +78,24 @@ pub fn create_commit(repo: &Repository, message: &str) -> Result<Oid, Error> {
 }
 
 /// Add path to staging index
-pub fn add_path(repo: &Repository, path: &Path) -> Result<(), Error> {
+pub fn add_path(repo: &Repository, relative_path: &Path) -> Result<(), Error> {
     // Get repo index
     let mut index = repo.index()?;
 
     // Add path to index
-    index.add_path(path)?;
+    index.add_path(relative_path)?;
 
     // Write index
     index.write()
 }
 
 /// Remove path from staging index
-pub fn rm_path(repo: &Repository, path: &Path) -> Result<(), Error> {
+pub fn rm_path(repo: &Repository, relative_path: &Path) -> Result<(), Error> {
     // Get repo index
     let mut index = repo.index()?;
 
     // Remove path from index
-    index.remove_path(path)?;
+    index.remove_path(relative_path)?;
 
     // Write index
     index.write()
