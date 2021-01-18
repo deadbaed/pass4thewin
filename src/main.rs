@@ -88,15 +88,7 @@ enum Command {
     },
     #[structopt(name = "rm")]
     /// Delete existing password or directory
-    Remove {
-        path: String,
-        /// Recursively delete contents of path
-        #[structopt(short = "r", long = "recursive")]
-        recursive: bool,
-        /// Force deletion of path
-        #[structopt(short = "f", long = "force")]
-        force: bool,
-    },
+    Remove { path: String },
     #[structopt(name = "mv")]
     /// Move or rename existing password or directory
     Move {
@@ -168,11 +160,7 @@ fn main() -> anyhow::Result<()> {
                 force,
                 clipboard,
             } => cmd::generate(&password, length, force, clipboard, &settings)?,
-            Command::Remove {
-                path,
-                recursive,
-                force,
-            } => cmd::remove(&path, recursive, force, &settings)?,
+            Command::Remove { path } => cmd::remove(&path, &settings)?,
             Command::Move {
                 old_path,
                 new_path,
