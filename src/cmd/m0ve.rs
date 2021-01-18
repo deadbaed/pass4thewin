@@ -79,7 +79,7 @@ pub fn m0ve(
 
     // Git operations if git repo is present
     if let Ok(repo) = Repository::open(&settings.get_password_store_path()?) {
-        sync::rm_path(&repo, &old)?;
+        sync::rm_file(&repo, &old)?;
         sync::add_path(&repo, &new)?;
         let commit_message = format!("Moved {} to {}", old_path, new_path);
         sync::create_commit(&repo, &commit_message)?;

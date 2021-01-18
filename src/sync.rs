@@ -89,8 +89,10 @@ pub fn add_path(repo: &Repository, relative_path: &Path) -> Result<(), Error> {
     index.write()
 }
 
-/// Remove path from staging index
-pub fn rm_path(repo: &Repository, relative_path: &Path) -> Result<(), Error> {
+/// Remove file from staging index
+///
+/// This *does not* support folders
+pub fn rm_file(repo: &Repository, relative_path: &Path) -> Result<(), Error> {
     // Get repo index
     let mut index = repo.index()?;
 
