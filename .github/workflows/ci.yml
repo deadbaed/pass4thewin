@@ -59,4 +59,5 @@ jobs:
           if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
           uses: actions-rs/cargo@v1
           with:
-            command: build --release
+            command: build
+            args: --release
