@@ -33,7 +33,7 @@ jobs:
           command: clippy
           args: -- -D warnings
 
-  check_tests:
+  check_tests_binary:
       name: Check code & Run tests
       runs-on: windows-latest
       steps:
@@ -55,22 +55,10 @@ jobs:
           with:
             command: test
 
-  binary_build:
-    if: |
-      github.event == 'push' &&
-      github.ref == 'refs/heads/master'
-    name: Binary build in release mode
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v2
-
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-
-      - name: Build binary
-        uses: actions-rs/cargo@v1
-        with:
-          command: build --release
+        - name: Build binary in release mode
+          if: |
+            github.event == 'push' &&
+            github.ref == 'refs/heads/master'
+          uses: actions-rs/cargo@v1
+          with:
+            command: build --release
