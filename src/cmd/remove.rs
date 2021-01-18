@@ -2,6 +2,38 @@ use crate::settings::Settings;
 use crate::sync;
 use anyhow::{anyhow, Context};
 use git2::Repository;
+use std::path::{Path, PathBuf};
+
+/// Remove file `current_path` and folders if they are empty
+fn remove_file(current_path: &mut PathBuf, base_path: &Path, path: &str) -> anyhow::Result<()> {
+    // Add path to list of items to remove
+    let mut vec = Vec::new();
+    vec.push(current_path.clone());
+
+    // If current folder has nothing left after deleting the `path`
+    // Try to remove parent folders until root of password store
+    while current_path.pop() {
+        // Stop when we are at the root of password store
+        if current_path.as_path() == base_path {
+            break;
+        }
+
+        // Try to read contents of directory
+        if let Ok(contents) = current_path.read_dir() {
+            // If there's only one element left (the one we are deleting)
+            if contents.count() == 1 {
+                vec.push(current_path.clone());
+            }
+        }
+    }
+
+    // Delete all the elements
+    fs_extra::remove_items(&vec)?;
+
+    println!("Removed `{}` from password store", path);
+
+    Ok(())
+}
 
 pub fn remove(path: &str, settings: &Settings) -> anyhow::Result<()> {
     let mut current_path = settings.get_password_store_path()?.join(path);
@@ -27,33 +59,9 @@ pub fn remove(path: &str, settings: &Settings) -> anyhow::Result<()> {
         return Ok(());
     }
 
-    // Add path to list of items to remove
-    let mut vec = Vec::new();
-    let orig_to_rm = current_path.clone();
-    vec.push(orig_to_rm.clone());
-
-    // If current folder has nothing left after deleting the `path`
-    // Try to remove parent folders until root of password store
     let base_path = settings.get_password_store_path()?;
-    while current_path.pop() {
-        // Stop when we are at the root of password store
-        if current_path.as_path() == base_path {
-            break;
-        }
-
-        // Try to read contents of directory
-        if let Ok(contents) = current_path.read_dir() {
-            // If there's only one element left (the one we are deleting)
-            if contents.count() == 1 {
-                vec.push(current_path.clone());
-            }
-        }
-    }
-
-    // Delete all the elements
-    fs_extra::remove_items(&vec)?;
-
-    println!("Removed `{}` from password store", path);
+    let orig_to_rm = current_path.clone();
+    remove_file(&mut current_path, base_path, &path)?;
 
     // Git operations if git repo is present
     if let Ok(repo) = Repository::open(&settings.get_password_store_path()?) {
@@ -66,4 +74,38 @@ pub fn remove(path: &str, settings: &Settings) -> anyhow::Result<()> {
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::password::Password;
+    use tempfile::tempdir;
+
+    #[test]
+    fn remove_file() -> anyhow::Result<()> {
+        let tmp_dir = tempdir()?;
+
+        let pgp_key = format!("{}\\tests\\secret-key.asc", env!("CARGO_MANIFEST_DIR"));
+        let password_contents = "my_super_secure_password";
+        let password_name = "fol1/fol2/password";
+        let password_store = crate::cmd::insert::tests::create_password_store(&tmp_dir.path())?;
+
+        // create password
+        let mut password = Password::from_single_line(password_contents);
+        password.set_filepath(&password_store, password_name);
+        password.encrypt_with_key(pgp_key.as_ref())?;
+
+        // make sure the password exists
+        assert_eq!(password.exists(), true);
+
+        // rm the file
+        let orig_password_path = password.get_filepath().unwrap().to_path_buf();
+        let mut password_path = orig_password_path.clone();
+        super::remove_file(&mut password_path, &password_store, password_name)?;
+
+        // the file should be gone now
+        assert_eq!(orig_password_path.exists(), false);
+
+        Ok(())
+    }
 }
