@@ -3,62 +3,74 @@ on: [push, pull_request]
 name: Continuous integration
 
 jobs:
-  test:
-    name: Test Suite
+  style_lint:
+    name: Coding style & Linting
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-      - uses: actions-rs/cargo@v1
-        with:
-          command: test
 
-  fmt:
-    name: Rustfmt
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
+      - name: Install toolchain
+        uses: actions-rs/toolchain@v1
         with:
           profile: minimal
           toolchain: stable
           override: true
-      - run: rustup component add rustfmt
-      - uses: actions-rs/cargo@v1
+
+      - name: Install rustfmt & clippy
+        run: |
+          rustup component add rustfmt
+          rustup component add clippy
+
+      - name: Fmt
+        uses: actions-rs/cargo@v1
         with:
           command: fmt
           args: --all -- --check
 
-  check:
-    name: Check
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-      - uses: actions-rs/cargo@v1
-        with:
-          command: check
-
-  clippy:
-    name: Clippy
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-      - run: rustup component add clippy
-      - uses: actions-rs/cargo@v1
+      - name: Clippy
+        uses: actions-rs/cargo@v1
         with:
           command: clippy
           args: -- -D warnings
+
+  check_tests:
+      name: Check code & Run tests
+      runs-on: windows-latest
+      steps:
+        - uses: actions/checkout@v2
+
+        - uses: actions-rs/toolchain@v1
+          with:
+            profile: minimal
+            toolchain: stable
+            override: true
+
+        - name: Check
+          uses: actions-rs/cargo@v1
+          with:
+            command: check
+
+        - name: Tests
+          uses: actions-rs/cargo@v1
+          with:
+            command: test
+
+  binary_build:
+    if: |
+      github.event == 'push' &&
+      github.ref == 'refs/heads/master'
+    name: Binary build in release mode
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+
+      - name: Build binary
+        uses: actions-rs/cargo@v1
+        with:
+          command: build --release
