@@ -63,6 +63,7 @@ jobs:
             args: --release
 
         - name: Zip binary
+          if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
           run: Compress-Archive -CompressionLevel Optimal -Force -Path target/release/pass4thewin.exe -DestinationPath target/release/pass4thewin-win64-${{ github.sha }}.zip
 
         - name: Save binary
