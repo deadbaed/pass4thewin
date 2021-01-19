@@ -7,6 +7,7 @@ pub mod init;
 pub mod insert;
 pub mod list;
 pub mod m0ve;
+pub mod otp;
 pub mod remove;
 pub mod show;
 

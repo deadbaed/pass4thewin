@@ -109,6 +109,8 @@ enum Command {
     },
     /// If the password store is a git repository, execute some git commands
     Git(GitCommands),
+    /// OTP commands
+    Otp(OtpCommands),
     /// Dump current settings
     Settings,
 }
@@ -117,6 +119,17 @@ enum Command {
 enum GitCommands {
     /// Initiate git repository
     Init,
+}
+
+#[derive(StructOpt)]
+enum OtpCommands {
+    /// Get 2fa code
+    Code {
+        password: String,
+        /// Copy code to clipboard
+        #[structopt(short = "c", long = "clipboard")]
+        clipboard: bool,
+    },
 }
 
 fn main() -> anyhow::Result<()> {
@@ -173,6 +186,12 @@ fn main() -> anyhow::Result<()> {
             } => cmd::copy(&old_path, &new_path, force),
             Command::Git(git_cmd) => match git_cmd {
                 GitCommands::Init => cmd::git::init(settings.get_password_store_path()?)?,
+            },
+            Command::Otp(otp_cmd) => match otp_cmd {
+                OtpCommands::Code {
+                    password,
+                    clipboard,
+                } => cmd::otp::code(&password, clipboard, &settings)?,
             },
             Command::Settings => settings.dump()?,
         },
