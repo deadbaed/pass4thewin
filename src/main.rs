@@ -44,8 +44,6 @@ enum Command {
     #[structopt(name = "ls")]
     /// List passwords
     List { password: Option<String> },
-    /// Find passwords matching parameter
-    Find { search: String },
     /// Show existing password
     Show {
         password: Option<String>,
@@ -98,15 +96,6 @@ enum Command {
         #[structopt(short = "f", long = "force")]
         force: bool,
     },
-    #[structopt(name = "cp")]
-    /// Copy existing password or directory
-    Copy {
-        old_path: String,
-        new_path: String,
-        /// Force copy of path
-        #[structopt(short = "f", long = "force")]
-        force: bool,
-    },
     /// If the password store is a git repository, execute some git commands
     Git(GitCommands),
     /// OTP commands
@@ -153,7 +142,6 @@ fn main() -> anyhow::Result<()> {
         Some(cmd) => match cmd {
             Command::Init { pgp_key, path } => cmd::init(&pgp_key, path, &mut settings)?,
             Command::List { password } => cmd::list(password, &settings)?,
-            Command::Find { search } => cmd::find(&search),
             Command::Show {
                 password,
                 line,
@@ -179,11 +167,6 @@ fn main() -> anyhow::Result<()> {
                 new_path,
                 force,
             } => cmd::m0ve(&old_path, &new_path, force, &settings)?,
-            Command::Copy {
-                old_path,
-                new_path,
-                force,
-            } => cmd::copy(&old_path, &new_path, force),
             Command::Git(git_cmd) => match git_cmd {
                 GitCommands::Init => cmd::git::init(settings.get_password_store_path()?)?,
             },
