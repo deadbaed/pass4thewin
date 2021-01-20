@@ -244,11 +244,11 @@ fn string_to_vec(input: &str) -> Option<Vec<String>> {
 pub fn set_to_clipboard(s: &str, name: &str) -> anyhow::Result<()> {
     match set_clipboard_string(s) {
         Ok(()) => {
-            println!("Password `{}` has been put on the clipboard", name);
+            println!("Entry `{}` has been put on the clipboard", name);
             Ok(())
         }
         Err(e) => Err(anyhow!(
-            "Failed to put password `{}` to the clipboard\n{:?}",
+            "Failed to put entry `{}` to the clipboard\n{:?}",
             name,
             e
         )),
