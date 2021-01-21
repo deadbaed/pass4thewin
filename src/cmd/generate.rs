@@ -72,8 +72,8 @@ pub fn generate(
 
     println!("Inserted `{}` in password store", password_name);
 
-    // Display password
-    println!("====\n{}", password.to_string()?);
+    password.display_line_padding(1)?;
+    println!("{}", password.to_string()?);
 
     Ok(())
 }

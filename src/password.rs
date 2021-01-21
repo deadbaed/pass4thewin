@@ -121,6 +121,16 @@ impl Password {
         self.password = string_to_vec(s);
     }
 
+    /// Returns whether password is multiline or not
+    ///
+    /// If there is no password, return false
+    pub fn is_multiline(&self) -> bool {
+        match &self.password {
+            Some(vec) => vec.len() != 1,
+            None => false,
+        }
+    }
+
     /// Get password from terminal
     pub fn terminal_input(&mut self, password_name: &str, multi_line: bool) -> Result<(), Error> {
         // Get input
@@ -196,6 +206,41 @@ impl Password {
         };
 
         Some(self.password.as_ref()?.get(line)?.as_str())
+    }
+
+    /// Display padding based off password's length
+    ///
+    /// With this method a user can be confident to copy correct data from a terminal,
+    /// and not copying invisible characters.
+    ///
+    /// Writes to `stdout` directly
+    ///
+    /// Example:
+    /// ```
+    /// =======
+    /// my_data <-- this won't be shown, it's for the example
+    /// ```
+    pub fn display_line_padding(&self, line: usize) -> anyhow::Result<()> {
+        let first_line = self
+            .line(line)
+            .context(format!("Failed to get line {}", line))?;
+
+        let first_line_len = {
+            let mut len = first_line.len();
+
+            // dont count the final \n otherwise it will look bad
+            if first_line.ends_with('\n') {
+                len -= 1;
+            }
+            len
+        };
+
+        for _ in 0..first_line_len {
+            print!("=");
+        }
+        println!();
+
+        Ok(())
     }
 }
 
