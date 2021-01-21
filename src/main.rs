@@ -21,7 +21,7 @@ struct CliArgs {
     // Replica of subcommand `show`
     password: Option<String>,
     /// Display only specific line of password file
-    #[structopt(long = "line")]
+    #[structopt(short = "l", long = "line")]
     line: Option<usize>,
     /// Copy password to clipboard
     #[structopt(short = "c", long = "clipboard")]
@@ -48,7 +48,7 @@ enum Command {
     Show {
         password: Option<String>,
         /// Display only specific line of password file
-        #[structopt(long = "line")]
+        #[structopt(short = "l", long = "line")]
         line: Option<usize>,
         /// Copy password to clipboard
         #[structopt(short = "c", long = "clipboard")]
