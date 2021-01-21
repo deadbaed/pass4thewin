@@ -42,7 +42,10 @@ pub fn generate(
     }
 
     // Generate password
-    let generated = PasswordGenerator::new();
+    let generated = PasswordGenerator::new()
+        .length(20)
+        .spaces(true)
+        .exclude_similar_characters(true);
     let generated = match length {
         Some(length) => generated.length(length),
         None => generated,
