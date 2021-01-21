@@ -29,7 +29,7 @@ pub fn generate(
         && !force
         && !Confirm::new()
             .with_prompt(format!(
-                "An entry already exists for {}. Overwrite it?",
+                "An entry already exists for `{}`. Overwrite it?",
                 password_name
             ))
             .default(false)
