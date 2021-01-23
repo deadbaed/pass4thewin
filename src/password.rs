@@ -121,16 +121,6 @@ impl Password {
         self.password = string_to_vec(s);
     }
 
-    /// Returns whether password is multiline or not
-    ///
-    /// If there is no password, return false
-    pub fn is_multiline(&self) -> bool {
-        match &self.password {
-            Some(vec) => vec.len() != 1,
-            None => false,
-        }
-    }
-
     /// Get password from terminal
     pub fn terminal_input(&mut self, password_name: &str, multi_line: bool) -> Result<(), Error> {
         // Get input

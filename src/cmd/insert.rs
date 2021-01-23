@@ -44,6 +44,7 @@ pub fn insert(
     if let Err(e) = password.terminal_input(password_name, multi_line) {
         return Err(anyhow!("Password insertion aborted: {}", e));
     }
+    println!();
 
     // Encrypt password and write output to file
     password.encrypt_with_key(settings.get_pgp_key_path()?)?;
@@ -57,7 +58,8 @@ pub fn insert(
 
     // Display password if echo flag is passed
     if echo {
-        println!("====\n{}", password.to_string()?);
+        password.display_line_padding(1)?;
+        println!("{}", password.to_string()?);
     }
 
     Ok(())

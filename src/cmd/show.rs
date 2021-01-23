@@ -62,9 +62,7 @@ pub fn show(
         return set_to_clipboard(&output, &password_name);
     }
 
-    if line.is_some() || !password.is_multiline() {
-        password.display_line_padding(line.unwrap_or(1))?;
-    }
+    password.display_line_padding(line.unwrap_or(1))?;
     println!("{}", output);
 
     Ok(())
