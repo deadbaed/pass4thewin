@@ -90,6 +90,10 @@ pub fn init(pgp_key: &Path, path: Option<PathBuf>, settings: &mut Settings) -> a
         password_store_path = new_password_store(&pgp_key, path)?;
     } else {
         password_store_path.pop();
+        println!(
+            "Detected password store at location {}",
+            password_store_path.display()
+        );
     }
 
     // Set and write settings
