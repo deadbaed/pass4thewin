@@ -42,7 +42,16 @@ fn get_password_store_path(path: &Option<PathBuf>) -> anyhow::Result<PathBuf> {
             None => return Err(anyhow!("Failed to get home directory path")),
         },
     };
-    new_path.push(".password-store");
+
+    // Try to detect existing password store
+    new_path.push(".gpg-id");
+
+    if new_path.is_file() {
+        new_path.pop();
+    } else {
+        new_path.pop();
+        new_path.push(".password-store");
+    }
 
     Ok(new_path)
 }
