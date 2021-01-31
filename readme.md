@@ -6,24 +6,22 @@ It should be compatible with pass (but no guarantees)
 
 Recommends `git` to be installed for syncing with git remotes, but it is not required.
 
-## Development
-
-Tools required: `rust` and `cargo`. You can use [rustup](https://rustup.rs) to install them.
-
-Run `cargo build` to compile and `cargo run` to run the binary.
+If you know a bit of **ssh keys**, **gpg**,  **OpenPGP** and **git** you should be alright.
 
 ## Install
 
-You can find binaries as development goes:
+for 64 bit only
 
-1. Pick the most recent result in the [list of events](https://github.com/x4m3/pass4thewin/actions?query=branch%3Amaster+is%3Asuccess)
-2. Download the artifact, it's a zip file containing the binary (x64 only)
-3. Place the binary in a folder in your PATH
-4. You should be able to run `pass4thewin` in a terminal
+- [Latest stable release](https://github.com/x4m3/pass4thewin/releases/latest)
+- [Development commit](https://github.com/x4m3/pass4thewin/actions?query=branch%3Amaster+is%3Asuccess) (pick the first result)
+
+Once you've downloaded your `pass4thewin.exe`, place it in a folder in your [PATH](https://www.architectryan.com/2018/03/17/add-to-the-path-on-windows-10/).
+
+You should be able to run `pass4thewin` in a terminal!
 
 ## First run
 
-To start using pass4thewin you need to have at least a PGP secret key in a file.
+To start using pass4thewin you need to have the PGP secret key you use for your password store in a file.
 
 Most users (I think) will be coming from linux, if you are and do not know how to export a PGP secret key you can read [this documentation](https://makandracards.com/makandra-orga/37763-gpg-extract-private-key-and-import-on-different-machine) to learn.
 
@@ -36,6 +34,12 @@ If you do not know how to get your `<private-key-path>`, find your private key i
 ![Screenshot of the Copy as path option in the windows explorer on a file](.github/screenshot-copy-path-file.png)
 
 Run `pass4thewin init --help` to find all the options of the init command.
+
+## Development
+
+Tools required: `rust` and `cargo`. You can use [rustup](https://rustup.rs) to install them.
+
+Run `cargo build` to compile and `cargo run` to run the binary.
 
 ## Config file
 
